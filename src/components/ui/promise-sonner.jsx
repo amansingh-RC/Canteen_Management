@@ -5,31 +5,6 @@ import { Button } from "@/components/ui/button"
 export function SonnerTypes() {
   return (
     <div className="flex flex-wrap gap-2">
-      <Button variant="outline" onClick={() => toast("Event has been created")}>
-        Default
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() => toast.success("Event has been created")}
-      >
-        Success
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() =>
-          toast.info("Be at the area 10 minutes before the event time")
-        }
-      >
-        Info
-      </Button>
-      <Button
-        variant="outline"
-        onClick={() =>
-          toast.warning("Event start time cannot be earlier than 8am")
-        }
-      >
-        Warning
-      </Button>
       <Button
         variant="outline"
         onClick={() => toast.error("Event has not been created")}
@@ -39,7 +14,7 @@ export function SonnerTypes() {
       <Button
         variant="outline"
         onClick={() => {
-          toast.promise<{ name: string }>(
+          toast.promise(
             () =>
               new Promise((resolve) =>
                 setTimeout(() => resolve({ name: "Event" }), 2000)

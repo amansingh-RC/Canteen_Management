@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Download, Plus } from "lucide-react";
+import { Download } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { DataState } from "@/components/shared/DataState";
@@ -22,7 +22,6 @@ const DEFAULT_FILTERS = { search: "", category: "All", status: "All" };
 
 export default function UserManagementPage() {
   const navigate = useNavigate();
-  // `draft` is the form state; `filters` is what's actually queried (on Apply).
   const [draft, setDraft] = useState(DEFAULT_FILTERS);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [page, setPage] = useState(1);
@@ -46,7 +45,6 @@ export default function UserManagementPage() {
         actions={
           <>
             <Button variant="outline" size="sm"><Download /> Export</Button>
-            <Button size="sm"><Plus /> Add User</Button>
           </>
         }
       />
@@ -63,10 +61,9 @@ export default function UserManagementPage() {
               onKeyDown={(e) => e.key === "Enter" && applyFilters()}
             />
           </div>
-          {/* <FilterSelect label="Department" value={draft.department} onChange={setField("department")} options={["All", ...DEPARTMENTS]} /> */}
           <FilterSelect label="Category" value={draft.category} onChange={setField("category")} options={["All", ...USER_CATEGORIES]} />
           <FilterSelect label="Status" value={draft.status} onChange={setField("status")} options={["All", "Active", "Disabled"]} />
-          <Button size="sm" onClick={applyFilters}>Apply Filters</Button>
+          <Button size="sm" className="bg-[#d4a24e] hover:bg-[#a87b2c]" onClick={applyFilters}>Apply Filters</Button>
         </CardContent>
       </Card>
 
@@ -93,7 +90,6 @@ export default function UserManagementPage() {
                     <TableRow key={u.id}>
                       <TableCell className="font-semibold">{u.id}</TableCell>
                       <TableCell>{u.name}</TableCell>
-                      {/* <TableCell>{u.department}</TableCell> */}
                       <TableCell><Badge variant="info">{u.category}</Badge></TableCell>
                       <TableCell><StatusBadge status={u.faceVerification} label={u.faceVerificationLabel} /></TableCell>
                       <TableCell>{u.activeCoupons}</TableCell>

@@ -17,6 +17,10 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      // Allow `const { omit, ...rest } = obj` to drop a field without flagging `omit`.
+      "no-unused-vars": ["error", { ignoreRestSiblings: true }],
+    },
   },
   {
     files: ["src/components/ui/**/*.{js,jsx}"],

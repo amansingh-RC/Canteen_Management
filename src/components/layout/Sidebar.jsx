@@ -1,9 +1,14 @@
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { navigationGroups } from "@/config/navigation";
+import { getNavGroupsForRole } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
+import { useAuth } from "@/auth/AuthProvider";
 
 export function Sidebar({ open, onNavigate }) {
+  const { role } = useAuth();
+  // Only show items the signed-in role is allowed to access.
+  const navigationGroups = getNavGroupsForRole(role);
+
   return (
     <aside
       className={cn(
@@ -51,7 +56,7 @@ export function Sidebar({ open, onNavigate }) {
                         : "text-sidebar-foreground hover:bg-white/5 hover:text-white"
                     )
                   }
-                >
+                > 
                   <Icon className="size-4.5 shrink-0 opacity-90" />
                   {item.label}
                 </NavLink>

@@ -2,8 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import { STATUS_VARIANT } from "@/config/meals";
 
 /**
- * Render a status as a colored chip. Maps a status key (e.g. "used",
- * "expired", "pending") to a Badge variant via the central STATUS_VARIANT map.
  *
  * @param {string} status - status key
  * @param {string} [label] - display text (defaults to the status key)

@@ -47,7 +47,9 @@ function structuredCloneSafe(value) {
   if (typeof structuredClone === "function") {
     try {
       return structuredClone(value);
-    } catch {}
+    } catch {
+      /* value isn't structured-cloneable — fall through and return it as-is */
+    }
   }
   return value;
 }

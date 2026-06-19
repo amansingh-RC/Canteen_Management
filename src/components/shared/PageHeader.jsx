@@ -1,4 +1,3 @@
-/** Standard page title block with optional right-aligned actions. */
 export function PageHeader({ title, description, actions }) {
   return (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-4">

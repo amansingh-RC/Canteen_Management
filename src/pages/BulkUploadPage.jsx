@@ -1,11 +1,9 @@
 import { Download, FileSpreadsheet, UploadCloud } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { KpiCard } from "@/components/shared/KpiCard";
-import { StatusBadge } from "@/components/shared/StatusBadge";
 import { DataState } from "@/components/shared/DataState";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAsyncData } from "@/hooks/useAsyncData";
 import { getLastImport } from "@/services/bulkUploadService";
 import { formatNumber } from "@/lib/format";
@@ -30,12 +28,10 @@ export default function BulkUploadPage() {
               <b className="text-foreground">Drop CSV / Excel here</b>
               <span className="text-sm">or browse — .csv, .xlsx up to 10MB</span>
               <input type="file" accept=".csv,.xlsx" className="hidden" />
-              <Button size="sm" className="mt-1" type="button">Browse files</Button>
+              <Button size="sm" className="mt-1 bg-[#d4a24e] hover:bg-[#a87b2c]" type="button">Browse files</Button>
             </label>
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm">Validate Data</Button>
-              <Button variant="outline" size="sm">Preview Records</Button>
-              <Button variant="success" size="sm"><FileSpreadsheet /> Import</Button>
+              <Button className="bg-[#219f5e] hover:bg-[#2ab36c] " size="sm"><FileSpreadsheet /> Import</Button>
             </div>
           </CardContent>
         </Card>
@@ -57,36 +53,6 @@ export default function BulkUploadPage() {
         </Card>
       </div>
 
-      <Card className="mt-4 overflow-hidden">
-        <CardHeader>
-          <CardTitle>Validation Errors</CardTitle>
-          <CardDescription>{data?.validationErrors.length ?? 0} rows need attention</CardDescription>
-        </CardHeader>
-        <DataState loading={loading} error={error} onRetry={refetch}>
-          {data && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Row</TableHead>
-                  <TableHead>Employee ID</TableHead>
-                  <TableHead>Error Reason</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.validationErrors.map((err) => (
-                  <TableRow key={err.row}>
-                    <TableCell>{err.row}</TableCell>
-                    <TableCell>{err.employeeId}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={err.severity === "danger" ? "expired" : "pending"} label={err.reason} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </DataState>
-      </Card>
     </>
   );
 }

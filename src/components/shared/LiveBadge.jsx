@@ -1,4 +1,3 @@
-/** Pulsing "LIVE" indicator used on real-time screens. */
 export function LiveBadge({ label = "LIVE" }) {
   return (
     <div className="flex items-center gap-2 text-sm font-semibold text-success">

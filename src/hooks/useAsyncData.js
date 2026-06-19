@@ -49,6 +49,9 @@ export function useAsyncData(fetcher, deps = [], { pollInterval = 0 } = {}) {
       active = false;
       if (intervalId) clearInterval(intervalId);
     };
+    // `fetcher` is intentionally excluded — callers pass a fresh closure each
+    // render; we re-run only when `deps` / pollInterval change or on refetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, reloadToken, pollInterval]);
 
   return { data, loading, error, refetch };

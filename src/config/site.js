@@ -1,5 +1,5 @@
 export const siteConfig = {
-  name: "Royal Chains",
+  name: "Royal Chains Limited",
   subtitle: "Canteen Admin",
   shortName: "RC",
   version: "v1.0",

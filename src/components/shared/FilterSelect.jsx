@@ -1,13 +1,6 @@
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
 
-/** Labeled dropdown used across filter bars. */
 export function FilterSelect({ label, value, onChange, options, className = "w-44" }) {
   return (
     <div className="flex flex-col gap-1">

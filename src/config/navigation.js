@@ -1,48 +1,58 @@
 import {
   LayoutDashboard,
-  Radio,
   Users,
   Upload,
-  Ticket,
-  ScanFace,
-  BarChart3,
-  UserSearch,
   FileText,
   Clock,
   Settings,
-  ScrollText,
+  ShieldCheck,
 } from "lucide-react";
 
+import { ROLES, ALL_ROLES } from "@/config/auth";
 export const navigationGroups = [
   {
     label: "Operations",
     items: [
-      { key: "dashboard", label: "Dashboard", path: "/", icon: LayoutDashboard },
-      // { key: "live", label: "Live Monitoring", path: "/live", icon: Radio },
-      { key: "users", label: "User Management", path: "/users", icon: Users },
-      { key: "bulk", label: "Bulk Upload Users", path: "/bulk-upload", icon: Upload },
-      // { key: "coupons", label: "Coupon Management", path: "/coupons", icon: Ticket },
-      // { key: "face", label: "Face Verification Logs", path: "/face-logs", icon: ScanFace },
-      { key: "reports", label: "Reports", path: "/reports", icon: FileText },
+      { key: "dashboard", label: "Dashboard", path: "/", icon: LayoutDashboard, roles: ALL_ROLES },
+      { key: "users", label: "User Management", path: "/users", icon: Users, roles: ALL_ROLES },
+      { key: "bulk", label: "Bulk Upload Users", path: "/bulk-upload", icon: Upload, roles: [ROLES.ADMIN] },
+      { key: "reports", label: "Reports", path: "/reports", icon: FileText, roles: [ROLES.ADMIN] },
     ],
   },
-  // {
-  //   label: "Insights",
-  //   items: [
-  //     { key: "analytics", label: "User Analytics", path: "/analytics", icon: BarChart3 },
-  //     { key: "detail", label: "User Detail", path: "/analytics/user", icon: UserSearch },
-  //     { key: "reports", label: "Reports", path: "/reports", icon: FileText },
-  //   ],
-  // },
   {
     label: "Administration",
     items: [
-      { key: "timings", label: "Meal Timing Settings", path: "/meal-timings", icon: Clock },
-      { key: "settings", label: "System Settings", path: "/settings", icon: Settings },
-      // { key: "audit", label: "Audit Logs", path: "/audit", icon: ScrollText },
+      { key: "admins", label: "Admin Management", path: "/admins", icon: ShieldCheck, roles: [ROLES.ADMIN] },
+      { key: "timings", label: "Meal Timing Settings", path: "/meal-timings", icon: Clock, roles: [ROLES.ADMIN] },
+      { key: "settings", label: "System Settings", path: "/settings", icon: Settings, roles: [ROLES.ADMIN] },
     ],
   },
 ];
 
-/** Flat list of all nav items (handy for breadcrumb/title lookups). */
+/** Flat list of all nav items (handy for breadcrumb/title/role lookups). */
 export const navigationItems = navigationGroups.flatMap((group) => group.items);
+
+/** Navigation groups visible to a given role (empty groups removed). */
+export function getNavGroupsForRole(role) {
+  return navigationGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => item.roles.includes(role)),
+    }))
+    .filter((group) => group.items.length > 0);
+}
+
+export function rolesForPath(pathname) {
+  const exact = navigationItems.find((item) => item.path === pathname);
+  if (exact) return exact.roles;
+  const prefix = navigationItems
+    .filter((item) => item.path !== "/" && pathname.startsWith(item.path))
+    .sort((a, b) => b.path.length - a.path.length)[0];
+  return prefix ? prefix.roles : null;
+}
+
+/** First path a role is allowed to land on (used as a post-login/redirect home). */
+export function firstPathForRole(role) {
+  const item = navigationItems.find((i) => i.roles.includes(role));
+  return item ? item.path : "/";
+}

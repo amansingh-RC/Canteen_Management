@@ -1,11 +1,11 @@
-import { useLocation } from "react-router-dom";
-import { Bell, Menu, Moon, Search, Sun } from "lucide-react";
-
+import { useLocation, useNavigate } from "react-router-dom";
+import { ChevronDown, LogOut, Menu, Moon, Sun } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,} from "@/components/ui/dropdown-menu";
 import { LiveClock } from "@/components/shared/LiveClock";
 import { useTheme } from "@/hooks/useTheme";
+import { useAuth } from "@/auth/AuthProvider";
 import { navigationItems } from "@/config/navigation";
-import { siteConfig } from "@/config/site";
 
 const TODAY = "Today, 18 Jun 2026";
 
@@ -19,8 +19,14 @@ function useCurrentTitle() {
 
 export function Topbar({ onToggleSidebar }) {
   const { theme, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const title = useCurrentTitle();
-  const { currentUser } = siteConfig;
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <header className="sticky top-0 z-20 flex items-center gap-4 border-b bg-card px-5 py-2.5">
@@ -42,7 +48,7 @@ export function Topbar({ onToggleSidebar }) {
         </span>
 
         <button
-          className="grid size-9 place-items-center rounded-md border"
+          className="grid size-9 place-items-center rounded-md border cursor-pointer"
           onClick={toggleTheme}
           aria-label="Toggle theme"
           title="Toggle theme"
@@ -50,19 +56,34 @@ export function Topbar({ onToggleSidebar }) {
           {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
         </button>
 
-        <div className="flex items-center gap-2 rounded-full border py-1 pl-1 pr-3">
-          <Avatar className="size-7">
-            <AvatarFallback className="text-[11px]">
-              {currentUser.initials}
-            </AvatarFallback>
-          </Avatar>
-          <div className="hidden leading-tight sm:block">
-            <b className="block text-xs">{currentUser.name}</b>
-            <small className="text-[11px] text-muted-foreground">
-              {currentUser.role}
-            </small>
-          </div>
-        </div>
+        {/* Profile menu with logout */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center gap-2 rounded-full border py-1 pl-1 pr-2 outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer">
+            <Avatar className="size-7">
+              <AvatarFallback className="text-[11px]">{user?.initials}</AvatarFallback>
+            </Avatar>
+            <div className="hidden leading-tight sm:block">
+              <b className="block text-xs">{user?.name}</b>
+              <small className="text-[11px] text-muted-foreground">{user?.role}</small>
+            </div>
+            <ChevronDown className="size-4 text-muted-foreground" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>
+              <div className="leading-tight">
+                <p className="text-sm font-medium text-foreground">{user?.name}</p>
+                <p className="text-xs font-normal text-muted-foreground">{user?.email}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={handleLogout}
+              className="text-danger focus:bg-danger-soft focus:text-danger"
+            >
+              <LogOut /> Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
