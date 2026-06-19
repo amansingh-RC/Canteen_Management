@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { UserPlus, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
+import { UserPlus, Loader2, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { DataState } from "@/components/shared/DataState";
 import { Button } from "@/components/ui/button";
@@ -14,33 +15,64 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAsyncData } from "@/hooks/useAsyncData";
-import { listAdmins, addAdmin } from "@/services/authService";
+import { useAuth } from "@/auth/AuthProvider";
+import { listAdmins, addAdmin, deleteAdmin } from "@/services/authService";
 import { ALL_ROLES, ROLES } from "@/config/auth";
 
 const EMPTY_FORM = { name: "", email: "", password: "", role: ROLES.OPERATOR };
 const ROLE_VARIANT = { [ROLES.ADMIN]: "info", [ROLES.OPERATOR]: "warning" };
 
 export default function AdminManagementPage() {
+  const { user } = useAuth();
   const { data: admins, loading, error, refetch } = useAsyncData(listAdmins, []);
   const [form, setForm] = useState(EMPTY_FORM);
-  const [status, setStatus] = useState(null); // { type: 'success' | 'error', message }
   const [submitting, setSubmitting] = useState(false);
 
   const setField = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
 
+  const handleDelete = async (admin) => {
+    const promise = deleteAdmin(admin.id);
+    toast.promise(promise, {
+      loading: `Removing ${admin.name}…`,
+      success: `${admin.name} removed.`,
+      error: (err) => err.message || "Could not remove admin",
+    });
+    try {
+      await promise;
+      refetch();
+    } catch {
+      /* error surfaced via toast */
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setStatus(null);
     setSubmitting(true);
+    const promise = addAdmin(form);
+    toast.promise(promise, {
+      loading: "Adding admin…",
+      success: (created) => `${created.name} added as ${created.role}.`,
+      error: (err) => err.message || "Could not add admin",
+    });
     try {
-      const created = await addAdmin(form);
-      setStatus({ type: "success", message: `${created.name} added as ${created.role}.` });
+      await promise;
       setForm(EMPTY_FORM);
       refetch();
-    } catch (err) {
-      setStatus({ type: "error", message: err.message || "Could not add admin" });
+    } catch {
+      /* error surfaced via toast */
     } finally {
       setSubmitting(false);
     }
@@ -60,21 +92,6 @@ export default function AdminManagementPage() {
             <CardTitle>Add Admin</CardTitle>
           </CardHeader>
           <CardContent>
-            {status && (
-              <div
-                className={`mb-4 flex items-start gap-2 rounded-md px-3 py-2 text-sm ${
-                  status.type === "success" ? "bg-success-soft text-success" : "bg-danger-soft text-danger"
-                }`}
-              >
-                {status.type === "success" ? (
-                  <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
-                ) : (
-                  <AlertCircle className="mt-0.5 size-4 shrink-0" />
-                )}
-                <span>{status.message}</span>
-              </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-3.5">
               <Field label="Full Name" id="name">
                 <Input id="name" value={form.name} onChange={(e) => setField("name")(e.target.value)} placeholder="e.g. Priya Nair" required />
@@ -117,6 +134,7 @@ export default function AdminManagementPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -127,6 +145,41 @@ export default function AdminManagementPage() {
                     <TableCell className="text-muted-foreground">{admin.email}</TableCell>
                     <TableCell>
                       <Badge variant={ROLE_VARIANT[admin.role] ?? "secondary"}>{admin.role}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {admin.id === user?.id ? (
+                        <span className="text-xs text-muted-foreground">You</span>
+                      ) : (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-danger hover:bg-danger-soft hover:text-danger"
+                              aria-label={`Delete ${admin.name}`}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remove admin?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This permanently removes <b>{admin.name}</b> ({admin.email}) and revokes their access. This can&apos;t be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={() => handleDelete(admin)}
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

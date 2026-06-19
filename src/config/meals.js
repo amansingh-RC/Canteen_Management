@@ -1,7 +1,7 @@
 export const MEALS = [
   { key: "breakfast", label: "Breakfast", prefix: "BK", color: "var(--info)" },
   { key: "lunch", label: "Lunch", prefix: "LU", color: "var(--success)" },
-  { key: "snack", label: "Evening Snack", prefix: "EV", color: "var(--warning)" },
+  { key: "snack", label: "Snack", prefix: "EV", color: "var(--warning)" },
   { key: "dinner", label: "Dinner", prefix: "DI", color: "#8b5cf6" },
 ];
 
@@ -18,6 +18,7 @@ export const STATUS_VARIANT = {
   failed: "danger",
   disabled: "danger",
   closed: "secondary",
+  off: "secondary",
 };
 
 export const USER_CATEGORIES = ["Dormitory", "OT"];

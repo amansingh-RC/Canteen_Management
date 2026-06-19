@@ -1,5 +1,6 @@
 import { mockRequest, ApiError } from "@/services/apiClient";
 import { adminAccounts } from "@/data/admins";
+import { ROLES } from "@/config/auth";
 
 let accounts = adminAccounts.map((a) => ({ ...a }));
 
@@ -55,4 +56,20 @@ export function addAdmin({ name, email, password, role }) {
     accounts = [...accounts, created];
     return sanitize(created);
   }, { latency: 400 });
+}
+
+/** Delete an admin account. Guards against removing the last Administrator. */
+export function deleteAdmin(id) {
+  return mockRequest(() => {
+    const target = accounts.find((a) => a.id === id);
+    if (!target) throw new ApiError("Admin not found", 404);
+
+    const otherAdmins = accounts.filter((a) => a.id !== id && a.role === ROLES.ADMIN);
+    if (target.role === ROLES.ADMIN && otherAdmins.length === 0) {
+      throw new ApiError("Can't remove the last administrator", 409);
+    }
+
+    accounts = accounts.filter((a) => a.id !== id);
+    return { ok: true, id, name: target.name };
+  }, { latency: 300 });
 }

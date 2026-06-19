@@ -13,10 +13,10 @@ export function getRecentSearches() {
   );
 }
 
-export function getUserDetail(query) {
+export function getUserDetail(query, monthKey) {
   return mockRequest(() => {
     const user = resolveUser(query) || users[0];
-    return { query, ...buildUserDetail(user) };
+    return { query, ...buildUserDetail(user, monthKey) };
   });
 }
 

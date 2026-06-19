@@ -1,5 +1,6 @@
 import { mockRequest } from "@/services/apiClient";
-import { mealTimings } from "@/data/mealTimings";
+import { readMealTimings } from "@/services/mealTimingService";
+import { decorateTimings, findActiveMeal } from "@/lib/mealStatus";
 import { buildLiveFeed } from "@/data/liveMonitoring";
 import { mealSession } from "@/data/mealSessions";
 import { liveRng } from "@/lib/random";
@@ -24,44 +25,72 @@ function countdownTo(hhmm, now) {
   return `${pad(hh)}:${pad(Math.floor(diff / 60))}:${pad(diff % 60)}`;
 }
 
+const ZERO = { total: 0, verified: 0, pending: 0, missed: 0 };
+
+/**
+ * Live snapshot. Statuses (active/upcoming/closed/off) are computed from the
+ * CURRENT TIME against the centrally-stored meal windows — so as real time
+ * passes (and the page polls), the active session changes automatically, and
+ * any edit on the Meal Timing page is reflected here.
+ */
 export function getLiveMonitoring() {
   return mockRequest(
     () => {
       const now = new Date();
-      const active = mealTimings.find((m) => m.status === "active") || mealTimings[0];
-      const activeCounts = mealSession(active.key, active.status);
-      // Small live drift to simulate verifications happening right now.
-      const drift = liveRng.int(0, 5);
+      const timings = decorateTimings(readMealTimings(), now);
+      const activeMeal = findActiveMeal(timings, now);
 
-      const activeSession = {
-        meal: active.label,
-        window: `${to12h(active.start)} – ${to12h(active.end)}`,
-        closesIn: countdownTo(active.end, now),
-        verified: activeCounts.verified + drift,
-        pending: Math.max(0, activeCounts.pending - drift),
-        expired: activeCounts.missed,
-      };
+      const sessions = timings.map((meal) => {
+        const isActive = meal.status === "active";
+        const isOff = meal.status === "off";
+        const counts = isOff ? ZERO : mealSession(meal.key, meal.status);
 
-      const sessionCards = mealTimings.map((meal) => {
-        const counts = mealSession(meal.key, meal.status);
-        const verifiedPct = Math.round(ratio(counts.verified, counts.total));
+        // Live drift only for the in-progress meal.
+        const drift = isActive ? liveRng.int(0, 5) : 0;
+        const verified = counts.verified + drift;
+        const pending = Math.max(0, counts.pending - drift);
+        const expired = counts.missed;
+        const verifiedPct = counts.total ? Math.round(ratio(verified, counts.total)) : 0;
+
+        let countdown = null;
+        let countdownLabel = null;
+        if (meal.status === "active") {
+          countdown = countdownTo(meal.end, now);
+          countdownLabel = "Window closes in";
+        } else if (meal.status === "upcoming") {
+          countdown = countdownTo(meal.start, now);
+          countdownLabel = "Window opens in";
+        }
+
         let detail;
-        if (meal.status === "active") detail = `${verifiedPct}% of eligible users verified`;
-        else if (meal.status === "upcoming") detail = `Window opens in ${countdownTo(meal.start, now)}`;
-        else detail = `${counts.verified} verified · ${counts.missed} missed`;
+        if (isOff) detail = "Meal disabled";
+        else if (meal.status === "active") detail = `${verifiedPct}% of eligible users verified`;
+        else if (meal.status === "upcoming") detail = `Opens in ${countdown}`;
+        else detail = `${verified} verified · ${expired} missed`;
+
+        // Only the active session streams a feed (the feed shows the live session only).
+        const feed = isActive ? buildLiveFeed(liveRng, 6, meal.label, now) : [];
+
         return {
+          key: meal.key,
           meal: meal.label,
           status: meal.status,
+          stateLabel: meal.statusLabel,
           statusLabel: meal.status === "upcoming" ? `Upcoming ${meal.start}` : meal.statusLabel,
-          window: `${meal.start}–${meal.end}`,
+          window: `${to12h(meal.start)} – ${to12h(meal.end)}`,
+          windowShort: `${meal.start}–${meal.end}`,
+          countdown,
+          countdownLabel,
+          verified,
+          pending,
+          expired,
+          progress: isActive ? verifiedPct : null,
           detail,
-          progress: meal.status === "active" ? verifiedPct : null,
+          feed,
         };
       });
 
-      const liveFeed = buildLiveFeed(liveRng, 6, active.label, now);
-
-      return { activeSession, sessionCards, liveFeed };
+      return { activeMealKey: activeMeal.key, sessions };
     },
     { latency: 250 }
   );

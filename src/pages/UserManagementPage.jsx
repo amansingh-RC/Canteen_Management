@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Download } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { DataState } from "@/components/shared/DataState";
@@ -72,8 +71,6 @@ export default function UserManagementPage() {
                   <TableHead>Name</TableHead>
                   {/* <TableHead>Department</TableHead> */}
                   <TableHead>Category</TableHead>
-                  <TableHead>Face Verification</TableHead>
-                  <TableHead>Last Verification</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -85,8 +82,6 @@ export default function UserManagementPage() {
                       <TableCell className="font-semibold">{u.id}</TableCell>
                       <TableCell>{u.name}</TableCell>
                       <TableCell><Badge className="">{u.category}</Badge></TableCell>
-                      <TableCell><StatusBadge status={u.faceVerification} label={u.faceVerificationLabel} /></TableCell>
-                      <TableCell className="text-muted-foreground">{u.lastVerification}</TableCell>
                       <TableCell><StatusBadge status={u.status} label={u.statusLabel} /></TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm" onClick={() => navigate(`/analytics/user?q=${u.id}`)}>

@@ -1,12 +1,4 @@
 import { users } from "@/data/users";
-
-/**
- * Per-meal verification counts powering the live dashboard.
- *
- * Each eligible user is expected at each meal; for a given meal we derive how
- * many have verified, are still pending, or missed the window — deterministically
- * from the user count and a per-meal attendance rate.
- */
 const TOTAL = users.length;
 
 const RATES = {

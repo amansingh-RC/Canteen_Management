@@ -1,10 +1,5 @@
 import { mockRequest } from "@/services/apiClient";
-import { mealTimings } from "@/data/mealTimings";
 import { faceRecognition, notifications, roleAccess } from "@/data/settings";
-
-export function getMealTimings() {
-  return mockRequest(mealTimings);
-}
 
 export function getSystemSettings() {
   return mockRequest({ faceRecognition, notifications, roleAccess });

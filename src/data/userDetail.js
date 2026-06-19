@@ -1,13 +1,29 @@
 import { createRng } from "@/lib/random";
 import { MEALS } from "@/config/meals";
 
-/**
- * Build a single user's monthly meal-attendance analytics (June 2026) on the fly.
- * Everything — summary, per-meal breakdown, calendar, timeline — is derived from
- * one generated set of daily records, seeded per-user so it's stable per person.
- */
-const DAYS_IN_MONTH = 30;
-const MONTH_START_DOW = 0; // June 1, 2026 is a Monday (Mon-first grid → 0)
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+const ANCHOR = { year: 2026, month: 6 };
+
+export function getMonthOptions(count = 6) {
+  const options = [];
+  let { year, month } = ANCHOR;
+  for (let i = 0; i < count; i += 1) {
+    options.push({
+      key: `${year}-${String(month).padStart(2, "0")}`,
+      label: `${MONTH_NAMES[month - 1]} ${year}`,
+    });
+    month -= 1;
+    if (month === 0) {
+      month = 12;
+      year -= 1;
+    }
+  }
+  return options;
+}
 
 function initialsOf(name) {
   return name
@@ -22,73 +38,81 @@ function seedFromId(id) {
   return [...id].reduce((acc, ch) => acc * 31 + ch.charCodeAt(0), 7) >>> 0;
 }
 
-export function buildUserDetail(user) {
-  const rng = createRng(seedFromId(user.id));
+function parseMonthKey(key) {
+  if (typeof key === "string" && /^\d{4}-\d{2}$/.test(key)) {
+    const [year, month] = key.split("-").map(Number);
+    return { year, month };
+  }
+  return { ...ANCHOR };
+}
 
-  // Daily × meal records for the month. Each weekday meal is attended, missed, or off.
+export function buildUserDetail(user, monthKey) {
+  const { year, month } = parseMonthKey(monthKey);
+  const rng = createRng((seedFromId(user.id) ^ (year * 100 + month)) >>> 0);
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const startDow = (new Date(year, month - 1, 1).getDay() + 6) % 7; // Mon-first grid
+
   const records = [];
   const calendarDays = [];
 
-  for (let day = 1; day <= DAYS_IN_MONTH; day += 1) {
-    const isWeekend = (MONTH_START_DOW + day - 1) % 7 >= 5;
-    let dayAttended = false;
-    let dayMissed = false;
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const dow = (startDow + day - 1) % 7;
+    const isWeekend = dow >= 5;
+    const attendedMeals = [];
+    let anyMissed = false;
 
     if (!isWeekend) {
       for (const meal of MEALS) {
         const status = rng.weighted({ attended: 80, missed: 8, none: 12 });
         if (status === "none") continue;
         records.push({ day, meal, status });
-        if (status === "attended") dayAttended = true;
-        else if (status === "missed") dayMissed = true;
+        if (status === "attended") attendedMeals.push(meal.key);
+        else anyMissed = true;
       }
     }
 
     calendarDays.push({
       day,
-      status: dayAttended ? "attended" : dayMissed ? "missed" : "none",
+      attendedMeals, // meal keys attended that day → one colored dot each
+      missed: attendedMeals.length === 0 && anyMissed,
+      status: attendedMeals.length ? "attended" : anyMissed ? "missed" : "none",
     });
   }
 
-  // Summary
   const offered = records.length;
   const attended = records.filter((r) => r.status === "attended").length;
   const missed = records.filter((r) => r.status === "missed").length;
-
-  // Per-meal breakdown
-  const VARIANT = { breakfast: "info", lunch: "success", snack: "warning", dinner: "info" };
+  const attendancePct = offered ? Math.round((attended / offered) * 100) : 0;
+  
   const mealBreakdown = MEALS.map((meal) => {
     const mealRecords = records.filter((r) => r.meal.key === meal.key);
     const attendedDays = mealRecords.filter((r) => r.status === "attended").length;
     const totalDays = mealRecords.length || 1;
     return {
+      key: meal.key,
       meal: meal.label,
+      color: meal.color,
       days: attendedDays,
       percent: Math.round((attendedDays / totalDays) * 100),
-      variant: VARIANT[meal.key],
     };
   });
 
-  // Timeline — first few events with a plausible verification time per meal.
-  const MEAL_HOUR = { breakfast: "08:10 AM", lunch: "01:15 PM", snack: "04:40 PM", dinner: "08:05 PM" };
-  const verificationTimeline = records.slice(0, 6).map((r) => ({
-    date: `${String(r.day).padStart(2, "0")} Jun`,
-    meal: r.meal.label,
-    time: r.status === "missed" ? "Missed" : MEAL_HOUR[r.meal.key],
-    missed: r.status === "missed",
-  }));
-
   return {
+    month: {
+      key: `${year}-${String(month).padStart(2, "0")}`,
+      label: `${MONTH_NAMES[month - 1]} ${year}`,
+    },
+    startDow,
     profile: {
       name: user.name,
       initials: initialsOf(user.name),
       employeeId: user.id,
       category: user.category,
-      attendance: user.monthlyAttendance,
+      attendance: attendancePct,
     },
     mealSummary: { offered, attended, missed },
     mealBreakdown,
-    verificationTimeline,
     calendarDays,
   };
 }
