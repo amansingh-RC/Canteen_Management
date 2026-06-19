@@ -1,10 +1,8 @@
 import { mockRequest } from "@/services/apiClient";
-import { coupons } from "@/data/coupons";
 import { mealTimings } from "@/data/mealTimings";
 import { buildLiveFeed } from "@/data/liveMonitoring";
+import { mealSession } from "@/data/mealSessions";
 import { liveRng } from "@/lib/random";
-import { mealConsumption } from "@/lib/aggregations";
-import { MEALS } from "@/config/meals";
 import { ratio } from "@/lib/format";
 
 function to12h(hhmm) {
@@ -30,11 +28,8 @@ export function getLiveMonitoring() {
   return mockRequest(
     () => {
       const now = new Date();
-      const perMeal = mealConsumption(coupons, MEALS);
-      const byKey = Object.fromEntries(perMeal.map((m) => [m.mealKey, m]));
-
       const active = mealTimings.find((m) => m.status === "active") || mealTimings[0];
-      const activeCounts = byKey[active.key];
+      const activeCounts = mealSession(active.key, active.status);
       // Small live drift to simulate verifications happening right now.
       const drift = liveRng.int(0, 5);
 
@@ -42,18 +37,18 @@ export function getLiveMonitoring() {
         meal: active.label,
         window: `${to12h(active.start)} – ${to12h(active.end)}`,
         closesIn: countdownTo(active.end, now),
-        verified: activeCounts.used + drift,
-        pending: Math.max(0, activeCounts.unused - drift),
-        expired: activeCounts.expired,
+        verified: activeCounts.verified + drift,
+        pending: Math.max(0, activeCounts.pending - drift),
+        expired: activeCounts.missed,
       };
 
       const sessionCards = mealTimings.map((meal) => {
-        const counts = byKey[meal.key];
-        const verifiedPct = Math.round(ratio(counts.used, counts.total));
+        const counts = mealSession(meal.key, meal.status);
+        const verifiedPct = Math.round(ratio(counts.verified, counts.total));
         let detail;
         if (meal.status === "active") detail = `${verifiedPct}% of eligible users verified`;
         else if (meal.status === "upcoming") detail = `Window opens in ${countdownTo(meal.start, now)}`;
-        else detail = `${counts.used} verified · ${counts.expired} expired`;
+        else detail = `${counts.verified} verified · ${counts.missed} missed`;
         return {
           meal: meal.label,
           status: meal.status,

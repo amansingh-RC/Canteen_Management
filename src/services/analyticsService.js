@@ -1,6 +1,5 @@
 import { mockRequest } from "@/services/apiClient";
 import { users, usersById } from "@/data/users";
-import { coupons } from "@/data/coupons";
 import { buildUserDetail } from "@/data/userDetail";
 
 export function getRecentSearches() {
@@ -28,8 +27,6 @@ function resolveUser(query) {
   if (usersById.has(query.trim().toUpperCase())) {
     return usersById.get(query.trim().toUpperCase());
   }
-  const byCoupon = coupons.find((c) => c.code.toLowerCase() === q);
-  if (byCoupon) return usersById.get(byCoupon.employeeId);
 
   return users.find((u) => u.name.toLowerCase().includes(q)) || null;
 }

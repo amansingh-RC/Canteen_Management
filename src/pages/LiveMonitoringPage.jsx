@@ -84,7 +84,6 @@ function LiveContent({ data }) {
               <TableHead>Time</TableHead>
               <TableHead>Employee</TableHead>
               <TableHead>Meal</TableHead>
-              <TableHead>Device / Location</TableHead>
               <TableHead>Result</TableHead>
             </TableRow>
           </TableHeader>
@@ -94,7 +93,6 @@ function LiveContent({ data }) {
                 <TableCell className="text-muted-foreground">{row.time}</TableCell>
                 <TableCell>{row.employeeId} · {row.name}</TableCell>
                 <TableCell>{row.meal}</TableCell>
-                <TableCell className="text-muted-foreground">{row.device}</TableCell>
                 <TableCell>
                   <StatusBadge status={row.result} label={row.resultLabel} />
                 </TableCell>

@@ -1,10 +1,10 @@
 import {
   LayoutDashboard,
   Users,
-  Upload,
+  // Upload,
   FileText,
   Clock,
-  Settings,
+  // Settings,
   ShieldCheck,
 } from "lucide-react";
 
@@ -15,7 +15,7 @@ export const navigationGroups = [
     items: [
       { key: "dashboard", label: "Dashboard", path: "/", icon: LayoutDashboard, roles: ALL_ROLES },
       { key: "users", label: "User Management", path: "/users", icon: Users, roles: ALL_ROLES },
-      { key: "bulk", label: "Bulk Upload Users", path: "/bulk-upload", icon: Upload, roles: [ROLES.ADMIN] },
+      // { key: "bulk", label: "Bulk Upload Users", path: "/bulk-upload", icon: Upload, roles: [ROLES.ADMIN] },
       { key: "reports", label: "Reports", path: "/reports", icon: FileText, roles: [ROLES.ADMIN] },
     ],
   },
@@ -24,7 +24,7 @@ export const navigationGroups = [
     items: [
       { key: "admins", label: "Admin Management", path: "/admins", icon: ShieldCheck, roles: [ROLES.ADMIN] },
       { key: "timings", label: "Meal Timing Settings", path: "/meal-timings", icon: Clock, roles: [ROLES.ADMIN] },
-      { key: "settings", label: "System Settings", path: "/settings", icon: Settings, roles: [ROLES.ADMIN] },
+      // { key: "settings", label: "System Settings", path: "/settings", icon: Settings, roles: [ROLES.ADMIN] },
     ],
   },
 ];

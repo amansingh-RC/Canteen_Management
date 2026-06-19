@@ -1,10 +1,3 @@
-export const couponFormat = {
-  breakfastPrefix: "BK",
-  lunchPrefix: "LU",
-  snackPrefix: "EV",
-  dinnerPrefix: "DI",
-};
-
 export const faceRecognition = {
   confidenceThreshold: 85,
   retryLimit: 2,

@@ -5,7 +5,7 @@ import { KpiCard } from "@/components/shared/KpiCard";
 import { Legend } from "@/components/shared/Legend";
 import { DataState } from "@/components/shared/DataState";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
@@ -34,7 +34,7 @@ export default function UserDetailPage() {
     <>
       <PageHeader
         title="User Detail Analytics"
-        description="Monthly history · June 2026"
+        description="Monthly history"
         actions={
           <Button variant="outline" size="sm" onClick={() => navigate("/users")}>
             <ArrowLeft /> Back to search
@@ -49,7 +49,7 @@ export default function UserDetailPage() {
 }
 
 function DetailContent({ data }) {
-  const { profile, couponSummary, mealBreakdown, verificationTimeline, calendarDays } = data;
+  const { profile, mealSummary, mealBreakdown, verificationTimeline, calendarDays } = data;
 
   return (
     <div className="space-y-4">
@@ -73,12 +73,11 @@ function DetailContent({ data }) {
 
       </div>
 
-      {/* Coupon KPIs */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard accent="blue" label="Generated" value={formatNumber(couponSummary.generated)} />
-        <KpiCard accent="green" label="Used" value={formatNumber(couponSummary.used)} />
-        <KpiCard accent="red" label="Expired" value={formatNumber(couponSummary.expired)} />
-        <KpiCard accent="amber" label="Unused" value={formatNumber(couponSummary.unused)} />
+      {/* Meal attendance KPIs */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <KpiCard accent="blue" label="Meals Offered" value={formatNumber(mealSummary.offered)} />
+        <KpiCard accent="green" label="Attended" value={formatNumber(mealSummary.attended)} />
+        <KpiCard accent="red" label="Missed" value={formatNumber(mealSummary.missed)} />
       </div>
 
       {/* Calendar + meal breakdown */}
@@ -88,9 +87,9 @@ function DetailContent({ data }) {
             <CardTitle>Calendar View — June 2026</CardTitle>
             <Legend
               items={[
-                { label: "Used", color: "var(--success)" },
-                { label: "Expired", color: "var(--danger)" },
-                { label: "Not used", color: "var(--muted)" },
+                { label: "Attended", color: "var(--success)" },
+                { label: "Missed", color: "var(--danger)" },
+                { label: "Off / none", color: "var(--muted)" },
               ]}
             />
           </CardHeader>
@@ -114,35 +113,14 @@ function DetailContent({ data }) {
           </CardContent>
         </Card>
       </div>
-
-      {/* Timeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Verification Timeline</CardTitle>
-          <CardDescription>Date · Meal · Verification time</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="relative ml-2 space-y-1 border-l-2 pl-5">
-            {verificationTimeline.map((ev, i) => (
-              <div key={i} className="relative py-2">
-                <span className="absolute -left-6.75 top-3 size-2.5 rounded-full border-2 border-card bg-primary" />
-                <b>{ev.date}</b> · {ev.meal}{" "}
-                <small className={cn("text-muted-foreground", ev.expired && "text-danger")}>
-                  → {ev.time}
-                </small>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
 
 const DOW = ["M", "T", "W", "T", "F", "S", "S"];
 const DAY_TONE = {
-  used: "bg-success-soft",
-  expired: "bg-danger-soft",
+  attended: "bg-success-soft",
+  missed: "bg-danger-soft",
   none: "bg-background",
 };
 
@@ -164,14 +142,14 @@ function CalendarGrid({ days }) {
           )}
         >
           <span>{d.day}</span>
-          {d.status === "used" && (
+          {d.status === "attended" && (
             <span className="flex gap-0.5">
               {[0, 1, 2].map((k) => (
                 <i key={k} className="size-1 rounded-full bg-success" />
               ))}
             </span>
           )}
-          {d.status === "expired" && <i className="size-1 rounded-full bg-danger" />}
+          {d.status === "missed" && <i className="size-1 rounded-full bg-danger" />}
         </div>
       ))}
     </div>

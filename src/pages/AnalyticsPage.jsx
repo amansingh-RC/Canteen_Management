@@ -21,7 +21,7 @@ export default function AnalyticsPage() {
     <>
       <PageHeader
         title="User Analytics"
-        description="Search a user by coupon code, employee ID, or name"
+        description="Search a user by employee ID or name"
       />
 
       <Card>
@@ -29,7 +29,7 @@ export default function AnalyticsPage() {
           <div className="flex flex-wrap items-center gap-2">
             <Input
               className="min-w-64 flex-1"
-              placeholder="e.g. BK20230001 · EMP1043 · Rahul"
+              placeholder="e.g. EMP1043 · Rahul"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && search()}
@@ -37,7 +37,7 @@ export default function AnalyticsPage() {
             <Button onClick={search}><Search /> Search</Button>
           </div>
           <p className="text-sm text-muted-foreground">
-            Search returns the user's complete monthly history. Try a coupon code like <b>BK20230001</b>.
+            Search returns the user's complete monthly history. Try an employee ID like <b>EMP1043</b>.
           </p>
         </CardContent>
       </Card>

@@ -42,11 +42,6 @@ export default function UserManagementPage() {
       <PageHeader
         title="User Management"
         description={`${formatNumber(data?.total ?? 0)} users across both categories`}
-        actions={
-          <>
-            <Button variant="outline" size="sm"><Download /> Export</Button>
-          </>
-        }
       />
 
       <Card className="mb-4">
@@ -78,7 +73,6 @@ export default function UserManagementPage() {
                   {/* <TableHead>Department</TableHead> */}
                   <TableHead>Category</TableHead>
                   <TableHead>Face Verification</TableHead>
-                  <TableHead>Active Coupons</TableHead>
                   <TableHead>Last Verification</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
@@ -90,9 +84,8 @@ export default function UserManagementPage() {
                     <TableRow key={u.id}>
                       <TableCell className="font-semibold">{u.id}</TableCell>
                       <TableCell>{u.name}</TableCell>
-                      <TableCell><Badge variant="info">{u.category}</Badge></TableCell>
+                      <TableCell><Badge className="">{u.category}</Badge></TableCell>
                       <TableCell><StatusBadge status={u.faceVerification} label={u.faceVerificationLabel} /></TableCell>
-                      <TableCell>{u.activeCoupons}</TableCell>
                       <TableCell className="text-muted-foreground">{u.lastVerification}</TableCell>
                       <TableCell><StatusBadge status={u.status} label={u.statusLabel} /></TableCell>
                       <TableCell>
@@ -104,7 +97,7 @@ export default function UserManagementPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
                       No users match these filters.
                     </TableCell>
                   </TableRow>
