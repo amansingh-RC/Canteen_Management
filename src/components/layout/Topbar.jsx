@@ -7,7 +7,14 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/auth/AuthProvider";
 import { navigationItems } from "@/config/navigation";
 
-const TODAY = "Today, 18 Jun 2026";
+function formatToday(date = new Date()) {
+  const formatted = date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  return `Today, ${formatted}`;
+}
 
 function useCurrentTitle() {
   const { pathname } = useLocation();
@@ -39,7 +46,7 @@ export function Topbar({ onToggleSidebar }) {
       </button>
 
       <div className="text-xs text-muted-foreground">
-        <b className="text-foreground">{title}</b> · {TODAY}
+        <b className="text-foreground">{title}</b> · {formatToday()}
       </div>
 
       <div className="ml-auto flex items-center gap-2.5">

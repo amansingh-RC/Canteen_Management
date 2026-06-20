@@ -3,12 +3,6 @@ export function formatNumber(value) {
   return new Intl.NumberFormat("en-IN").format(value);
 }
 
-export function formatPercent(value, { fromRatio = false, digits = 1 } = {}) {
-  if (value === null || value === undefined) return "—";
-  const pct = fromRatio ? value * 100 : value;
-  return `${pct.toFixed(digits)}%`;
-}
-
 export function ratio(part, whole) {
   if (!whole) return 0;
   return Math.min(100, Math.max(0, (part / whole) * 100));
