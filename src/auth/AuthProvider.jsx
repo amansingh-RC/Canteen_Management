@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { login as loginRequest } from "@/services/authService";
+import { disconnectSocket } from "@/services/socketClient";
 import { useIdleTimeout } from "@/hooks/useIdleTimeout";
 import {
   AUTH_STORAGE_KEY,
@@ -36,6 +37,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback((reason) => {
     if (reason === "idle") sessionStorage.setItem(IDLE_FLAG_KEY, "1");
+    disconnectSocket();
     persist(null);
   }, []);
 

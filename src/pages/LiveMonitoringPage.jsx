@@ -3,19 +3,19 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { KpiCard } from "@/components/shared/KpiCard";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { LiveClock } from "@/components/shared/LiveClock";
-import { LiveBadge } from "@/components/shared/LiveBadge";
+import { LiveConnectionBadge } from "@/components/shared/LiveConnectionBadge";
 import { DataState } from "@/components/shared/DataState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { useAsyncData } from "@/hooks/useAsyncData";
-import { getLiveMonitoring } from "@/services/liveService";
+import { useLiveMonitoring } from "@/hooks/useLiveMonitoring";
 
 export default function LiveMonitoringPage() {
-  // Polls every 3s for a live, drifting view of the sessions.
-  const { data, loading, error, refetch } = useAsyncData(getLiveMonitoring, [], {
+  // Real-time via Socket.IO when the backend is connected; falls back to a 3s
+  // poll of the mock service while VITE_USE_MOCK=true.
+  const { data, loading, error, refetch } = useLiveMonitoring({
     pollInterval: 3000,
   });
 
@@ -24,7 +24,7 @@ export default function LiveMonitoringPage() {
       <PageHeader
         title="Live Monitoring"
         description="Real-time meal session tracking · updates every few seconds"
-        actions={<LiveBadge />}
+        actions={<LiveConnectionBadge />}
       />
       <DataState loading={loading} error={error} onRetry={refetch}>
         {data && <LiveContent data={data} />}

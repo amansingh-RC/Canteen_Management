@@ -11,12 +11,23 @@ export function mockRequest(data, { latency = MOCK_LATENCY } = {}) {
   });
 }
 
-/** Real HTTP request — used once the backend is connected. */
+/**
+ * Real HTTP request — used once the backend is connected.
+ *
+ * @param {string} path
+ * @param {object} [opts]
+ * @param {string} [opts.method]  HTTP method (default GET)
+ * @param {object} [opts.body]    JSON body (auto-stringified)
+ * @param {object} [opts.query]   query params (undefined/null/""/"All" skipped)
+ * @param {object} [opts.headers]
+ * @param {AbortSignal} [opts.signal]
+ */
 export async function apiRequest(
   path,
-  { method = "GET", body, headers, signal } = {},
+  { method = "GET", body, headers, signal, query } = {},
 ) {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const url = `${BASE_URL}${path}${toQueryString(query)}`;
+  const res = await fetch(url, {
     method,
     headers: {
       "Content-Type": "application/json",
@@ -41,6 +52,21 @@ export class ApiError extends Error {
     this.name = "ApiError";
     this.status = status;
   }
+}
+
+/**
+ * Build a "?a=1&b=2" string from an object. Skips empty values and the app's
+ * "All" no-filter sentinel, so callers can pass filter state directly.
+ */
+function toQueryString(params) {
+  if (!params) return "";
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null || value === "" || value === "All") continue;
+    search.append(key, value);
+  }
+  const qs = search.toString();
+  return qs ? `?${qs}` : "";
 }
 
 function structuredCloneSafe(value) {

@@ -1,8 +1,12 @@
-import { mockRequest } from "@/services/apiClient";
+import { apiRequest, mockRequest, USE_MOCK } from "@/services/apiClient";
+import { ENDPOINTS } from "@/config/endpoints";
 import { users, usersById } from "@/data/users";
 import { buildUserDetail } from "@/data/userDetail";
 
 export function getRecentSearches() {
+  if (!USE_MOCK) {
+    return apiRequest(ENDPOINTS.recentSearches);
+  }
   return mockRequest(() =>
     users.slice(0, 5).map((u, i) => ({
       query: i % 2 === 0 ? u.id : u.name.split(" ")[0],
@@ -14,6 +18,9 @@ export function getRecentSearches() {
 }
 
 export function getUserDetail(query, monthKey) {
+  if (!USE_MOCK) {
+    return apiRequest(ENDPOINTS.userDetail, { query: { query, month: monthKey } });
+  }
   return mockRequest(() => {
     const user = resolveUser(query) || users[0];
     return { query, ...buildUserDetail(user, monthKey) };

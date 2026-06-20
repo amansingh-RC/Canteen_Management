@@ -1,4 +1,5 @@
-import { mockRequest } from "@/services/apiClient";
+import { apiRequest, mockRequest, USE_MOCK } from "@/services/apiClient";
+import { ENDPOINTS } from "@/config/endpoints";
 import { reportTypes, exportHistory } from "@/data/reports";
 
 /** "2026-06-01" → "01 Jun 2026" (falls back to the raw value). */
@@ -27,6 +28,9 @@ function describeScope(filters = {}) {
  * `return apiRequest("/reports", { method: "POST", body: filters })`.
  */
 export function getReports(filters = {}) {
+  if (!USE_MOCK) {
+    return apiRequest(ENDPOINTS.reports, { method: "POST", body: filters });
+  }
   return mockRequest(() => {
     const scope = describeScope(filters);
     return {
@@ -39,6 +43,12 @@ export function getReports(filters = {}) {
 
 /** Triggers a report export. No-op in mock mode. */
 export function exportReport(reportKey, format, filters) {
+  if (!USE_MOCK) {
+    return apiRequest(ENDPOINTS.reportExport, {
+      method: "POST",
+      body: { reportKey, format, filters },
+    });
+  }
   return mockRequest(
     { ok: true, reportKey, format, filters, url: "#" },
     { latency: 500 }

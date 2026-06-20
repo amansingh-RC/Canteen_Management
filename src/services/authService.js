@@ -1,4 +1,5 @@
-import { mockRequest, ApiError } from "@/services/apiClient";
+import { apiRequest, mockRequest, ApiError, USE_MOCK } from "@/services/apiClient";
+import { ENDPOINTS } from "@/config/endpoints";
 import { adminAccounts } from "@/data/admins";
 import { ROLES } from "@/config/auth";
 
@@ -13,6 +14,9 @@ function sanitize({ password, ...user }) {
 
 /** Authenticate by email + password. Resolves the user or rejects with ApiError. */
 export function login({ email, password }) {
+  if (!USE_MOCK) {
+    return apiRequest(ENDPOINTS.login, { method: "POST", body: { email, password } });
+  }
   return mockRequest(() => {
     const match = accounts.find(
       (a) => a.email.toLowerCase() === String(email).trim().toLowerCase()
@@ -26,11 +30,20 @@ export function login({ email, password }) {
 
 /** List all admin accounts (without passwords). */
 export function listAdmins() {
+  if (!USE_MOCK) {
+    return apiRequest(ENDPOINTS.admins);
+  }
   return mockRequest(() => accounts.map(sanitize));
 }
 
 /** Create a new admin account and return it (without password). */
 export function addAdmin({ name, email, password, role }) {
+  if (!USE_MOCK) {
+    return apiRequest(ENDPOINTS.admins, {
+      method: "POST",
+      body: { name, email, password, role },
+    });
+  }
   return mockRequest(() => {
     const exists = accounts.some(
       (a) => a.email.toLowerCase() === String(email).trim().toLowerCase()
@@ -60,6 +73,9 @@ export function addAdmin({ name, email, password, role }) {
 
 /** Delete an admin account. Guards against removing the last Administrator. */
 export function deleteAdmin(id) {
+  if (!USE_MOCK) {
+    return apiRequest(ENDPOINTS.admin(id), { method: "DELETE" });
+  }
   return mockRequest(() => {
     const target = accounts.find((a) => a.id === id);
     if (!target) throw new ApiError("Admin not found", 404);

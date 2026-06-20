@@ -1,29 +1,12 @@
-import { mockRequest } from "@/services/apiClient";
+import { apiRequest, mockRequest, USE_MOCK } from "@/services/apiClient";
+import { ENDPOINTS } from "@/config/endpoints";
 import { readMealTimings } from "@/services/mealTimingService";
 import { decorateTimings, findActiveMeal } from "@/lib/mealStatus";
+import { buildLiveSnapshot, to12h, countdownTo } from "@/lib/liveTransform";
 import { buildLiveFeed } from "@/data/liveMonitoring";
 import { mealSession } from "@/data/mealSessions";
 import { liveRng } from "@/lib/random";
 import { ratio } from "@/lib/format";
-
-function to12h(hhmm) {
-  const [h, m] = hhmm.split(":").map(Number);
-  const period = h >= 12 ? "PM" : "AM";
-  const h12 = h % 12 === 0 ? 12 : h % 12;
-  return `${String(h12).padStart(2, "0")}:${m.toString().padStart(2, "0")} ${period}`;
-}
-
-// "HH:MM:SS" remaining until target "HH:MM" today (clamped at zero).
-function countdownTo(hhmm, now) {
-  const [h, m] = hhmm.split(":").map(Number);
-  const target = new Date(now);
-  target.setHours(h, m, 0, 0);
-  let diff = Math.max(0, Math.floor((target - now) / 1000));
-  const pad = (n) => String(n).padStart(2, "0");
-  const hh = Math.floor(diff / 3600);
-  diff %= 3600;
-  return `${pad(hh)}:${pad(Math.floor(diff / 60))}:${pad(diff % 60)}`;
-}
 
 const ZERO = { total: 0, verified: 0, pending: 0, missed: 0 };
 
@@ -33,7 +16,16 @@ const ZERO = { total: 0, verified: 0, pending: 0, missed: 0 };
  * passes (and the page polls), the active session changes automatically, and
  * any edit on the Meal Timing page is reflected here.
  */
-export function getLiveMonitoring() {
+export function getLiveMonitoring({ signal } = {}) {
+  // Real backend: fetch RAW counts and transform to the display shape. Live
+  // updates arrive separately over Socket.IO (see useLiveMonitoring).
+  if (!USE_MOCK) {
+    return apiRequest(ENDPOINTS.liveMonitoring, { signal }).then((raw) =>
+      buildLiveSnapshot(raw)
+    );
+  }
+
+  // Mock mode: synthesize a drifting snapshot from local data.
   return mockRequest(
     () => {
       const now = new Date();

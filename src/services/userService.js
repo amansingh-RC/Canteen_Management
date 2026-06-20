@@ -1,4 +1,5 @@
-import { mockRequest } from "@/services/apiClient";
+import { apiRequest, mockRequest, USE_MOCK } from "@/services/apiClient";
+import { ENDPOINTS } from "@/config/endpoints";
 import { users } from "@/data/users";
 
 /**
@@ -6,6 +7,11 @@ import { users } from "@/data/users";
  * @returns {{ items, total, page, pageSize, totalPages }}
  */
 export function getUsers({ page = 1, pageSize = 12, search, category, status } = {}) {
+  if (!USE_MOCK) {
+    return apiRequest(ENDPOINTS.users, {
+      query: { page, pageSize, search, category, status },
+    });
+  }
   return mockRequest(() => {
     const filtered = users.filter((u) => {
       if (search) {
