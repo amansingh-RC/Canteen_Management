@@ -1,91 +1,93 @@
-import { apiRequest, mockRequest, ApiError, USE_MOCK } from "@/services/apiClient";
+import { apiRequest, setAuthToken } from "@/services/apiClient";
 import { ENDPOINTS } from "@/config/endpoints";
-import { adminAccounts } from "@/data/admins";
 import { ROLES } from "@/config/auth";
 
-let accounts = adminAccounts.map((a) => ({ ...a }));
+const ROLE_TO_ID = { [ROLES.ADMIN]: 1, [ROLES.OPERATOR]: 2 };
+const ID_TO_ROLE = { 1: ROLES.ADMIN, 2: ROLES.OPERATOR };
+// Backend role name → frontend label
+const NAME_TO_ROLE = { admin: ROLES.ADMIN, operator: ROLES.OPERATOR };
 
-let counter = accounts.length;
-
-/** Strip the password before a user object ever leaves this layer. */
-function sanitize({ password, ...user }) {
-  return user;
+function roleIdFor(label) {
+  return ROLE_TO_ID[label] ?? ROLE_TO_ID[ROLES.OPERATOR];
 }
 
-/** Authenticate by email + password. Resolves the user or rejects with ApiError. */
-export function login({ email, password }) {
-  if (!USE_MOCK) {
-    return apiRequest(ENDPOINTS.login, { method: "POST", body: { email, password } });
-  }
-  return mockRequest(() => {
-    const match = accounts.find(
-      (a) => a.email.toLowerCase() === String(email).trim().toLowerCase()
-    );
-    if (!match || match.password !== password) {
-      throw new ApiError("Invalid email or password", 401);
-    }
-    return sanitize(match);
-  });
+/** Resolve a frontend role label from any backend role representation. */
+function roleLabelFor(raw) {
+  if (raw == null) return ROLES.OPERATOR;
+  if (typeof raw === "number") return ID_TO_ROLE[raw] ?? ROLES.OPERATOR; // roleId
+  if (typeof raw === "object") return NAME_TO_ROLE[raw.roleName?.toLowerCase()] ?? ROLES.OPERATOR;
+  return NAME_TO_ROLE[String(raw).toLowerCase()] ?? ROLES.OPERATOR; // "admin"/"operator"
 }
 
-/** List all admin accounts (without passwords). */
-export function listAdmins() {
-  if (!USE_MOCK) {
-    return apiRequest(ENDPOINTS.admins);
-  }
-  return mockRequest(() => accounts.map(sanitize));
+function initialsOf(name = "") {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .filter(Boolean)
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }
 
-/** Create a new admin account and return it (without password). */
-export function addAdmin({ name, email, password, role }) {
-  if (!USE_MOCK) {
-    return apiRequest(ENDPOINTS.admins, {
+/** Normalize a backend admin (login / register / list shapes) → app shape. */
+function normalizeAdmin(raw = {}) {
+  const name = raw.username ?? raw.name ?? "";
+  return {
+    id: raw.id,
+    name,
+    email: raw.email ?? "",
+    role: roleLabelFor(raw.role ?? raw.roleId),
+    initials: initialsOf(name),
+  };
+}
+
+/** Unwrap the { success, data } envelope. */
+function unwrap(res) {
+  return res?.data ?? res;
+}
+
+/** Authenticate by email + password. Stores the token; returns the user. */
+export async function login({ email, password }) {
+  const data = unwrap(
+    await apiRequest(ENDPOINTS.login, { method: "POST", body: { email, password } })
+  );
+  if (data?.token) setAuthToken(data.token);
+  // The login payload's admin object omits email — fill it from what was typed.
+  const admin = data.admin ?? data;
+  return normalizeAdmin({ ...admin, email: admin.email ?? email });
+}
+
+/** Register (create) a new admin account. */
+export async function register({ name, email, password, role }) {
+  const data = unwrap(
+    await apiRequest(ENDPOINTS.register, {
       method: "POST",
-      body: { name, email, password, role },
-    });
-  }
-  return mockRequest(() => {
-    const exists = accounts.some(
-      (a) => a.email.toLowerCase() === String(email).trim().toLowerCase()
-    );
-    if (exists) throw new ApiError("An admin with this email already exists", 409);
-
-    counter += 1;
-    const initials = name
-      .split(" ")
-      .map((p) => p[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-
-    const created = {
-      id: `ADM${String(counter).padStart(3, "0")}`,
-      name: name.trim(),
-      email: email.trim(),
-      password,
-      role,
-      initials,
-    };
-    accounts = [...accounts, created];
-    return sanitize(created);
-  }, { latency: 400 });
+      body: { username: name, email, password, roleId: roleIdFor(role) },
+    })
+  );
+  return normalizeAdmin(data);
 }
 
-/** Delete an admin account. Guards against removing the last Administrator. */
-export function deleteAdmin(id) {
-  if (!USE_MOCK) {
-    return apiRequest(ENDPOINTS.admin(id), { method: "DELETE" });
-  }
-  return mockRequest(() => {
-    const target = accounts.find((a) => a.id === id);
-    if (!target) throw new ApiError("Admin not found", 404);
+// The Admin Management page calls this to create an admin.
+export const addAdmin = register;
 
-    const otherAdmins = accounts.filter((a) => a.id !== id && a.role === ROLES.ADMIN);
-    if (target.role === ROLES.ADMIN && otherAdmins.length === 0) {
-      throw new ApiError("Can't remove the last administrator", 409);
-    }
+/** List all admin accounts. */
+export async function listAdmins() {
+  const data = unwrap(await apiRequest(ENDPOINTS.admins));
+  return Array.isArray(data) ? data.map(normalizeAdmin) : [];
+}
 
-    accounts = accounts.filter((a) => a.id !== id);
-    return { ok: true, id, name: target.name };
-  }, { latency: 300 });
+/** Update an admin's email and/or role. Only changed fields are sent. */
+export async function updateAdmin(id, { email, role } = {}) {
+  const body = {};
+  if (email !== undefined) body.email = email;
+  if (role !== undefined) body.roleId = roleIdFor(role);
+  const data = unwrap(await apiRequest(ENDPOINTS.admin(id), { method: "PUT", body }));
+  return normalizeAdmin(data);
+}
+
+/** Delete an admin account. */
+export async function deleteAdmin(id) {
+  await apiRequest(ENDPOINTS.admin(id), { method: "DELETE" });
+  return { ok: true, id };
 }

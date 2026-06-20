@@ -1,27 +1,11 @@
-/**
- * Central registry of ALL backend API routes.
- *
- * One place for every backend path, so wiring the real backend = editing this
- * file (+ flipping VITE_USE_MOCK in .env). Paths are appended to
- * VITE_API_BASE_URL (see src/services/apiClient.js).
- *
- * Why paths live here and NOT in .env: .env holds environment-specific values
- * (the host/origin, the mock toggle) that change per machine/deploy. Route
- * paths are the SAME across every environment, so they belong in code where
- * they can be imported and refactored safely. The "centralised" config you
- * wanted is: base URL → .env, all routes → this file.
- *
- * Functions are used for routes that need an id/param.
- * Real-time updates are NOT here — those flow over Socket.IO
- * (src/services/socketClient.js, configured via VITE_SOCKET_URL).
- */
 export const ENDPOINTS = {
   // ── Auth ────────────────────────────────────────────────────────────────
-  login: "/auth/login", // POST { email, password } → user (+ token)
+  login: "/auth/login", // POST { email, password } → { token, admin }
+  register: "/auth/register", // POST { username, email, password, roleId } → admin
 
   // ── Admins (Admin Management page) ──────────────────────────────────────
-  admins: "/admins", // GET list · POST create { name, email, password, role }
-  admin: (id) => `/admins/${id}`, // DELETE one
+  admins: "/admins", // GET list
+  admin: (id) => `/admins/${id}`, // PUT { email, roleId } · DELETE one
 
   // ── Users (User Management page) ────────────────────────────────────────
   users: "/users", // GET ?page&pageSize&search&category&status → paginated

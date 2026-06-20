@@ -4,6 +4,30 @@ export const USE_MOCK =
 
 const MOCK_LATENCY = 350;
 
+// ── Bearer token (set on login, sent with every authenticated request) ──────
+const TOKEN_KEY = "canteen-auth-token";
+
+export function setAuthToken(token) {
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* ignore storage errors */
+  }
+}
+
+export function getAuthToken() {
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function clearAuthToken() {
+  setAuthToken(null);
+}
+
 export function mockRequest(data, { latency = MOCK_LATENCY } = {}) {
   const resolve = typeof data === "function" ? data : () => data;
   return new Promise((res) => {
@@ -27,10 +51,12 @@ export async function apiRequest(
   { method = "GET", body, headers, signal, query } = {},
 ) {
   const url = `${BASE_URL}${path}${toQueryString(query)}`;
+  const token = getAuthToken();
   const res = await fetch(url, {
     method,
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     },
     body: body ? JSON.stringify(body) : undefined,
@@ -38,7 +64,16 @@ export async function apiRequest(
   });
 
   if (!res.ok) {
-    const message = await res.text().catch(() => res.statusText);
+    // Backend errors come as { success:false, message }. Prefer that message.
+    const raw = await res.text().catch(() => "");
+    let message = res.statusText;
+    if (raw) {
+      try {
+        message = JSON.parse(raw).message || raw;
+      } catch {
+        message = raw;
+      }
+    }
     throw new ApiError(message || "Request failed", res.status);
   }
   // No-content responses (204) shouldn't try to parse JSON.

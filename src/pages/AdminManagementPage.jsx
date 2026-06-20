@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { UserPlus, Loader2, Trash2 } from "lucide-react";
+import { UserPlus, Loader2, Trash2, Pencil } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { DataState } from "@/components/shared/DataState";
 import { Button } from "@/components/ui/button";
@@ -26,10 +26,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAsyncData } from "@/hooks/useAsyncData";
 import { useAuth } from "@/auth/AuthProvider";
-import { listAdmins, addAdmin, deleteAdmin } from "@/services/authService";
+import { listAdmins, addAdmin, updateAdmin, deleteAdmin } from "@/services/authService";
 import { ALL_ROLES, ROLES } from "@/config/auth";
 
 const EMPTY_FORM = { name: "", email: "", password: "", role: ROLES.OPERATOR };
@@ -40,6 +48,7 @@ export default function AdminManagementPage() {
   const { data: admins, loading, error, refetch } = useAsyncData(listAdmins, []);
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [editing, setEditing] = useState(null); // admin being edited, or null
 
   const setField = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -52,6 +61,22 @@ export default function AdminManagementPage() {
     });
     try {
       await promise;
+      refetch();
+    } catch {
+      /* error surfaced via toast */
+    }
+  };
+
+  const handleUpdate = async ({ email, role }) => {
+    const promise = updateAdmin(editing.id, { email, role });
+    toast.promise(promise, {
+      loading: `Updating ${editing.name}…`,
+      success: `${editing.name} updated.`,
+      error: (err) => err.message || "Could not update admin",
+    });
+    try {
+      await promise;
+      setEditing(null);
       refetch();
     } catch {
       /* error surfaced via toast */
@@ -147,21 +172,30 @@ export default function AdminManagementPage() {
                       <Badge variant={ROLE_VARIANT[admin.role] ?? "secondary"}>{admin.role}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      {admin.id === user?.id ? (
-                        <span className="text-xs text-muted-foreground">You</span>
-                      ) : (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-danger hover:bg-danger-soft hover:text-danger"
-                              aria-label={`Delete ${admin.name}`}
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setEditing(admin)}
+                          aria-label={`Edit ${admin.name}`}
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                        {admin.id === user?.id ? (
+                          <span className="px-2 text-xs text-muted-foreground">You</span>
+                        ) : (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-danger hover:bg-danger-soft hover:text-danger"
+                                aria-label={`Delete ${admin.name}`}
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>Remove admin?</AlertDialogTitle>
                               <AlertDialogDescription>
@@ -178,8 +212,9 @@ export default function AdminManagementPage() {
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
-                        </AlertDialog>
-                      )}
+                          </AlertDialog>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -188,7 +223,77 @@ export default function AdminManagementPage() {
           </DataState>
         </Card>
       </div>
+
+      <EditAdminDialog
+        admin={editing}
+        onClose={() => setEditing(null)}
+        onSave={handleUpdate}
+      />
     </>
+  );
+}
+
+function EditAdminDialog({ admin, onClose, onSave }) {
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState(ROLES.OPERATOR);
+  const [saving, setSaving] = useState(false);
+  const [syncedId, setSyncedId] = useState(null);
+
+  // Seed the form when a new admin is selected for editing.
+  if (admin && admin.id !== syncedId) {
+    setSyncedId(admin.id);
+    setEmail(admin.email);
+    setRole(admin.role);
+  }
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await onSave({ email, role });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={Boolean(admin)} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit admin</DialogTitle>
+          <DialogDescription>
+            Update the email and role for <b>{admin?.name}</b>.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSave} className="space-y-3.5">
+          <Field label="Email" id="edit-email">
+            <Input
+              id="edit-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </Field>
+          <Field label="Role" id="edit-role">
+            <Select value={role} onValueChange={setRole}>
+              <SelectTrigger id="edit-role"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ALL_ROLES.map((r) => (
+                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          <DialogFooter>
+            <Button type="submit" className="bg-[#d4a24e] hover:bg-[#a87b2c]" disabled={saving}>
+              {saving ? <Loader2 className="animate-spin" /> : null}
+              Save changes
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
