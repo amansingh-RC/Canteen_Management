@@ -22,11 +22,3 @@ export const STATUS_VARIANT = {
 };
 
 export const USER_CATEGORIES = ["Dormitory", "OT"];
-
-// export const DEPARTMENTS = [
-//   "Production",
-//   "Packaging",
-//   "Admin",
-//   "QA",
-//   "Logistics",
-// ];

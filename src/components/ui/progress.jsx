@@ -3,11 +3,6 @@ import * as ProgressPrimitive from "@radix-ui/react-progress";
 
 import { cn } from "@/lib/utils";
 
-/**
- * Progress bar.
- * `indicatorClassName` lets callers recolor the fill (e.g. bg-success) without
- * touching the track styles.
- */
 const Progress = React.forwardRef(
   ({ className, value = 0, indicatorClassName, ...props }, ref) => (
     <ProgressPrimitive.Root

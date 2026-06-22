@@ -8,11 +8,6 @@ const STATE = {
   disconnected: { label: "Offline", text: "text-muted-foreground", dot: "bg-muted-foreground", pulse: false },
 };
 
-/**
- * Live connection indicator for real-time screens. Shows a pulsing green "LIVE"
- * while connected, amber "Reconnecting…" while the socket retries, and a grey
- * "Offline" when the connection has dropped.
- */
 export function LiveConnectionBadge() {
   const status = useSocketStatus();
   const state = STATE[status] ?? STATE.disconnected;

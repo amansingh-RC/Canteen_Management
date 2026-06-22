@@ -12,7 +12,6 @@ export function setAuthToken(token) {
     if (token) localStorage.setItem(TOKEN_KEY, token);
     else localStorage.removeItem(TOKEN_KEY);
   } catch {
-    /* ignore storage errors */
   }
 }
 
@@ -36,13 +35,12 @@ export function mockRequest(data, { latency = MOCK_LATENCY } = {}) {
 }
 
 /**
- * Real HTTP request — used once the backend is connected.
  *
  * @param {string} path
  * @param {object} [opts]
- * @param {string} [opts.method]  HTTP method (default GET)
- * @param {object} [opts.body]    JSON body (auto-stringified)
- * @param {object} [opts.query]   query params (undefined/null/""/"All" skipped)
+ * @param {string} [opts.method] 
+ * @param {object} [opts.body]  
+ * @param {object} [opts.query] 
  * @param {object} [opts.headers]
  * @param {AbortSignal} [opts.signal]
  */
@@ -64,7 +62,6 @@ export async function apiRequest(
   });
 
   if (!res.ok) {
-    // Backend errors come as { success:false, message }. Prefer that message.
     const raw = await res.text().catch(() => "");
     let message = res.statusText;
     if (raw) {
@@ -76,7 +73,6 @@ export async function apiRequest(
     }
     throw new ApiError(message || "Request failed", res.status);
   }
-  // No-content responses (204) shouldn't try to parse JSON.
   if (res.status === 204) return null;
   return res.json();
 }
@@ -89,10 +85,6 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Build a "?a=1&b=2" string from an object. Skips empty values and the app's
- * "All" no-filter sentinel, so callers can pass filter state directly.
- */
 function toQueryString(params) {
   if (!params) return "";
   const search = new URLSearchParams();
@@ -109,7 +101,6 @@ function structuredCloneSafe(value) {
     try {
       return structuredClone(value);
     } catch {
-      /* value isn't structured-cloneable — fall through and return it as-is */
     }
   }
   return value;

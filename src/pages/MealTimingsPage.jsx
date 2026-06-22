@@ -11,14 +11,7 @@ import { useAsyncData } from "@/hooks/useAsyncData";
 import { getMealTimings, updateMealTimings } from "@/services/mealTimingService";
 import { mealStatus, STATUS_LABEL } from "@/lib/mealStatus";
 
-// Editable fields per meal — only these are diffed/sent on save.
 const EDITABLE_FIELDS = ["start", "end", "enabled"];
-
-/**
- * Diff edited rows against the last-saved baseline. Returns only the meals that
- * changed, and within each, only the fields that changed:
- *   { lunch: { start: "12:30" } }
- */
 function diffTimings(baseline, rows) {
   const baseByKey = new Map(baseline.map((m) => [m.key, m]));
   const changes = {};
@@ -37,11 +30,8 @@ function diffTimings(baseline, rows) {
 export default function MealTimingsPage() {
   const { data, loading, error, refetch } = useAsyncData(getMealTimings, []);
   const [rows, setRows] = useState([]);
-  // Last-saved snapshot; the diff sent to the backend is computed against this.
   const [baseline, setBaseline] = useState(null);
   const [saving, setSaving] = useState(false);
-
-  // Seed the form once, when data first arrives (don't clobber edits later).
   if (data && baseline === null) {
     setBaseline(data);
     setRows(data);
@@ -52,8 +42,6 @@ export default function MealTimingsPage() {
 
   const handleSave = async () => {
     const changes = diffTimings(baseline ?? [], rows);
-
-    // Nothing edited → don't send an empty request.
     if (Object.keys(changes).length === 0) {
       toast.info("No changes to save");
       return;
@@ -68,14 +56,11 @@ export default function MealTimingsPage() {
     });
     try {
       await promise;
-      // Advance the baseline so the next save diffs against what we just saved.
       setBaseline(rows);
     } finally {
       setSaving(false);
     }
   };
-
-  // Live status is derived from the current time against the edited windows.
   const now = new Date();
 
   return (

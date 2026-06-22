@@ -10,22 +10,12 @@ import { ratio } from "@/lib/format";
 
 const ZERO = { total: 0, verified: 0, pending: 0, missed: 0 };
 
-/**
- * Live snapshot. Statuses (active/upcoming/closed/off) are computed from the
- * CURRENT TIME against the centrally-stored meal windows — so as real time
- * passes (and the page polls), the active session changes automatically, and
- * any edit on the Meal Timing page is reflected here.
- */
 export function getLiveMonitoring({ signal } = {}) {
-  // Real backend: fetch RAW counts and transform to the display shape. Live
-  // updates arrive separately over Socket.IO (see useLiveMonitoring).
   if (!USE_MOCK) {
     return apiRequest(ENDPOINTS.liveMonitoring, { signal }).then((raw) =>
       buildLiveSnapshot(raw)
     );
   }
-
-  // Mock mode: synthesize a drifting snapshot from local data.
   return mockRequest(
     () => {
       const now = new Date();
@@ -36,8 +26,6 @@ export function getLiveMonitoring({ signal } = {}) {
         const isActive = meal.status === "active";
         const isOff = meal.status === "off";
         const counts = isOff ? ZERO : mealSession(meal.key, meal.status);
-
-        // Live drift only for the in-progress meal.
         const drift = isActive ? liveRng.int(0, 5) : 0;
         const verified = counts.verified + drift;
         const pending = Math.max(0, counts.pending - drift);
@@ -59,8 +47,6 @@ export function getLiveMonitoring({ signal } = {}) {
         else if (meal.status === "active") detail = `${verifiedPct}% of eligible users verified`;
         else if (meal.status === "upcoming") detail = `Opens in ${countdown}`;
         else detail = `${verified} verified · ${expired} missed`;
-
-        // Only the active session streams a feed (the feed shows the live session only).
         const feed = isActive ? buildLiveFeed(liveRng, 6, meal.label, now) : [];
 
         return {

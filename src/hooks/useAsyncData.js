@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 
 /**
- * Run an async service function and track loading/error/data.
- *
- * @param {Function} fetcher  async function returning the data
- * @param {Array}    deps     re-run when these change (like useEffect deps)
+ * @param {Function} fetcher 
+ * @param {Array}    deps   
  * @param {object}   [options]
- * @param {number}   [options.pollInterval]  ms; when > 0, silently refetches on
- *                   an interval (no loading flicker) — used by live screens.
+ * @param {number}   [options.pollInterval] 
  
  */
 export function useAsyncData(fetcher, deps = [], { pollInterval = 0 } = {}) {
@@ -16,7 +13,6 @@ export function useAsyncData(fetcher, deps = [], { pollInterval = 0 } = {}) {
   const [error, setError] = useState(null);
   const [reloadToken, setReloadToken] = useState(0);
 
-  // Imperative reload (e.g. a Retry button). Safe to call from event handlers.
   const refetch = useCallback(() => {
     setLoading(true);
     setError(null);
@@ -26,7 +22,6 @@ export function useAsyncData(fetcher, deps = [], { pollInterval = 0 } = {}) {
   useEffect(() => {
     let active = true;
 
-    // `silent` polls update data in the background without toggling loading.
     const run = (silent) =>
       Promise.resolve()
         .then(() => fetcher())
@@ -49,9 +44,7 @@ export function useAsyncData(fetcher, deps = [], { pollInterval = 0 } = {}) {
       active = false;
       if (intervalId) clearInterval(intervalId);
     };
-    // `fetcher` is intentionally excluded — callers pass a fresh closure each
-    // render; we re-run only when `deps` / pollInterval change or on refetch.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [...deps, reloadToken, pollInterval]);
 
   return { data, loading, error, refetch };

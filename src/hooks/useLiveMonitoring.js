@@ -4,9 +4,7 @@ import { connectSocket } from "@/services/socketClient";
 import { getLiveMonitoring } from "@/services/liveService";
 import { buildLiveSnapshot } from "@/lib/liveTransform";
 
-// Server → client: a fresh live-monitoring snapshot is pushed on this event.
 const SNAPSHOT_EVENT = "live:monitoring";
-// Client → server: ask to start / stop receiving snapshots for this screen.
 const SUBSCRIBE_EVENT = "live:subscribe";
 const UNSUBSCRIBE_EVENT = "live:unsubscribe";
 
@@ -25,7 +23,6 @@ export function useLiveMonitoring({ pollInterval = 3000 } = {}) {
   useEffect(() => {
     let active = true;
 
-    // ── Mock mode: poll the local service (no backend yet) ──────────────────
     if (USE_MOCK) {
       const run = (silent) =>
         getLiveMonitoring()
@@ -50,8 +47,6 @@ export function useLiveMonitoring({ pollInterval = 3000 } = {}) {
       };
     }
 
-    // ── Backend mode: REST for first paint, then Socket.IO for live pushes ──
-    // Fetch the current snapshot so the page isn't blank until the first event.
     getLiveMonitoring()
       .then((snapshot) => {
         if (!active) return;
@@ -60,7 +55,7 @@ export function useLiveMonitoring({ pollInterval = 3000 } = {}) {
       })
       .catch((err) => {
         if (!active) return;
-        // Don't surface as a hard error — the socket may still deliver data.
+
         setError(err);
         setLoading(false);
       });
@@ -69,7 +64,6 @@ export function useLiveMonitoring({ pollInterval = 3000 } = {}) {
 
     const onSnapshot = (payload) => {
       if (!active) return;
-      // Backend pushes RAW counts; derive the display shape on the client.
       setData(buildLiveSnapshot(payload));
       setError(null);
       setLoading(false);
@@ -83,8 +77,6 @@ export function useLiveMonitoring({ pollInterval = 3000 } = {}) {
 
     socket.on(SNAPSHOT_EVENT, onSnapshot);
     socket.on("connect_error", onConnectError);
-
-    // Tell the server we want updates (re-emit on reconnect too).
     const subscribe = () => socket.emit(SUBSCRIBE_EVENT);
     socket.on("connect", subscribe);
     if (socket.connected) subscribe();

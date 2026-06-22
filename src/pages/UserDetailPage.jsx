@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-
 import { PageHeader } from "@/components/shared/PageHeader";
 import { KpiCard } from "@/components/shared/KpiCard";
 import { Legend } from "@/components/shared/Legend";
@@ -23,8 +22,6 @@ import { getUserDetail } from "@/services/analyticsService";
 import { getMonthOptions } from "@/data/userDetail";
 import { formatNumber } from "@/lib/format";
 import { MEALS } from "@/config/meals";
-
-// Latest 6 months (newest first); colour lookup shared with the breakdown bars.
 const MONTH_OPTIONS = getMonthOptions(6);
 const MEAL_COLOR = Object.fromEntries(MEALS.map((m) => [m.key, m.color]));
 

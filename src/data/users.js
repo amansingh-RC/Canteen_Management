@@ -1,10 +1,6 @@
 import { createRng } from "@/lib/random";
 import { USER_CATEGORIES } from "@/config/meals";
 
-/**
- * Base user directory — the single source of truth for "who exists".
- * Generated deterministically (fixed seed) so the dataset is stable across reloads.
- */
 export const USER_COUNT = 1420;
 
 const FIRST_NAMES = [

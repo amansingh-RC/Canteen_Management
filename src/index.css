@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Dark mode driven by a `.dark` class on <html> (toggled in code) */
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -100,7 +99,6 @@
   --sidebar-ring: oklch(0.62 0.2 264);
 }
 
-/* Expose tokens to Tailwind utilities (bg-success, text-warning, border-sidebar-border, ...) */
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

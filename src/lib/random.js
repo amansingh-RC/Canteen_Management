@@ -17,13 +17,9 @@ export function createRng(seed = 1) {
 
 function buildHelpers(rand) {
   return {
-    /** float in [0, 1) */
     next: rand,
-    /** integer in [min, max] inclusive */
     int: (min, max) => Math.floor(rand() * (max - min + 1)) + min,
-    /** pick one element from an array */
     pick: (arr) => arr[Math.floor(rand() * arr.length)],
-    /** true with probability p */
     chance: (p) => rand() < p,
     /**
      * @param {Record<string, number>} weights

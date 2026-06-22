@@ -13,8 +13,6 @@ import { cn } from "@/lib/utils";
 import { useLiveMonitoring } from "@/hooks/useLiveMonitoring";
 
 export default function LiveMonitoringPage() {
-  // Real-time via Socket.IO when the backend is connected; falls back to a 3s
-  // poll of the mock service while VITE_USE_MOCK=true.
   const { data, loading, error, refetch } = useLiveMonitoring({
     pollInterval: 3000,
   });
@@ -35,16 +33,12 @@ export default function LiveMonitoringPage() {
 
 function LiveContent({ data }) {
   const { sessions, activeMealKey } = data;
-  // Which session the user is viewing. Null → default to the active meal.
   const [selectedKey, setSelectedKey] = useState(null);
 
   const current =
     sessions.find((s) => s.key === selectedKey) ||
     sessions.find((s) => s.key === activeMealKey) ||
     sessions[0];
-
-  // The feed always reflects the live (active) session only — never past/upcoming,
-  // regardless of which session card is selected above.
   const liveSession = sessions.find((s) => s.status === "active");
 
   return (
@@ -102,8 +96,6 @@ function LiveContent({ data }) {
           );
         })}
       </div>
-
-      {/* Live feed — always the live (active) session only, never past/upcoming */}
       <Card className="overflow-hidden">
         <CardHeader>
           <CardTitle className="font-bold">

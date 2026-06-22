@@ -10,7 +10,6 @@ export const STATUS_LABEL = {
   off: "Off",
 };
 
-/** Compute a meal's status from the current time (disabled meals → "off"). */
 export function mealStatus(meal, now = new Date()) {
   if (meal.enabled === false) return "off";
   const cur = now.getHours() * 60 + now.getMinutes();
@@ -21,7 +20,6 @@ export function mealStatus(meal, now = new Date()) {
   return "closed";
 }
 
-/** Add computed `status` + `statusLabel` to each timing. */
 export function decorateTimings(timings, now = new Date()) {
   return timings.map((meal) => {
     const status = mealStatus(meal, now);
@@ -29,7 +27,6 @@ export function decorateTimings(timings, now = new Date()) {
   });
 }
 
-/** The currently active meal; else the soonest upcoming; else the first. */
 export function findActiveMeal(timings, now = new Date()) {
   const decorated = decorateTimings(timings, now);
   return (

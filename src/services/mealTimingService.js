@@ -42,7 +42,6 @@ export function readMealTimings() {
       if (Array.isArray(parsed) && parsed.length) return parsed;
     }
   } catch {
-    /* ignore corrupted storage and fall back to defaults */
   }
   return defaultMealTimings;
 }
@@ -51,7 +50,7 @@ function cacheTimings(timings) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(timings));
   } catch {
-    /* ignore quota/serialization errors */
+  
   }
 }
 

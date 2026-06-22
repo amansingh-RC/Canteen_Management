@@ -1,18 +1,10 @@
 import { apiRequest } from "@/services/apiClient";
 import { ENDPOINTS } from "@/config/endpoints";
 
-/*
- * Employees are integrated with the REAL backend (GET /api/users) regardless of
- * VITE_USE_MOCK. The backend returns a flat array of
- * { userId, name, department, isActive, createdAt } with no server-side
- * pagination, so we map → app shape and paginate/filter on the client.
- */
-
 function unwrap(res) {
   return res?.data ?? res;
 }
 
-/** Backend user → app row shape used by the User Management table. */
 function normalizeUser(raw = {}) {
   const active = raw.isActive !== false;
   return {
@@ -25,9 +17,6 @@ function normalizeUser(raw = {}) {
 }
 
 /**
- * Paginated, filtered employee list. Fetches the full list from the backend,
- * then filters + paginates locally to keep the table's expected response shape.
- *
  * @returns {{ items, total, page, pageSize, totalPages }}
  */
 export async function getUsers({ page = 1, pageSize = 12, search, category, status } = {}) {

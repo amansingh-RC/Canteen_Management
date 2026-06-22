@@ -10,7 +10,6 @@ export function to12h(hhmm) {
   return `${String(h12).padStart(2, "0")}:${m.toString().padStart(2, "0")} ${period}`;
 }
 
-/** "HH:MM:SS" remaining until target "HH:MM" today (clamped at zero). */
 export function countdownTo(hhmm, now) {
   const [h, m] = hhmm.split(":").map(Number);
   const target = new Date(now);
@@ -22,9 +21,6 @@ export function countdownTo(hhmm, now) {
   return `${pad(hh)}:${pad(Math.floor(diff / 60))}:${pad(diff % 60)}`;
 }
 
-// Feed result keys the backend sends → human label. The key also drives the
-// StatusBadge colour (see STATUS_VARIANT in src/config/meals.js), so stick to
-// these values: "verified" | "failed" | "expired".
 const RESULT_LABEL = {
   verified: "Verified",
   failed: "Failed",
@@ -39,28 +35,6 @@ function formatFeedTime(timestamp) {
   return Number.isNaN(date.getTime()) ? String(timestamp) : formatClock(date);
 }
 
-/**
- * Convert a RAW backend payload into the display shape the Live Monitoring page
- * renders. The backend only sends facts per meal; the frontend derives status,
- * countdowns, windows, percentages and labels here (against the locally-stored
- * meal timings + current time).
- *
- * Expected raw shape:
- *   {
- *     meals: [
- *       {
- *         key: "lunch",            // must match a meal timing key
- *         total: 120,             // eligible users (optional; for progress %)
- *         verified: 80,
- *         pending: 30,
- *         missed: 10,
- *         feed: [                 // recent verification hits (active meal only)
- *           { id, employeeId, name, timestamp, result }
- *         ]
- *       }
- *     ]
- *   }
- */
 export function buildLiveSnapshot(raw, now = new Date()) {
   const timings = decorateTimings(readMealTimings(), now);
   const activeMeal = findActiveMeal(timings, now);
