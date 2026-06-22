@@ -1,16 +1,39 @@
-import { apiRequest, mockRequest, USE_MOCK } from "@/services/apiClient";
+import { apiRequest } from "@/services/apiClient";
 import { ENDPOINTS } from "@/config/endpoints";
 import { defaultMealTimings } from "@/data/mealTimings";
 
 const STORAGE_KEY = "canteen-meal-timings";
+const NAME_TO_KEY = {
+  breakfast: "breakfast",
+  lunch: "lunch",
+  snack: "snack",
+  snacks: "snack",
+  dinner: "dinner",
+};
 
-/**
- * Synchronous read of the current windows (cached override or defaults).
- *
- * This is the single synchronous source of truth used by live status
- * derivation (see liveTransform). In backend mode getMealTimings() refreshes
- * this cache, so the live screen always sees the latest windows.
- */
+function keyForName(name = "") {
+  const lower = name.trim().toLowerCase();
+  return NAME_TO_KEY[lower] ?? lower.replace(/\s+/g, "-");
+}
+
+const toHHMM = (t = "") => String(t).slice(0, 5); 
+const toHHMMSS = (t = "") => (String(t).length === 5 ? `${t}:00` : t); 
+
+function normalizeMeal(raw = {}) {
+  return {
+    key: keyForName(raw.name),
+    mealId: raw.mealId,
+    label: raw.name,
+    start: toHHMM(raw.startTime),
+    end: toHHMM(raw.endTime),
+    enabled: Boolean(raw.isActive),
+  };
+}
+
+function unwrap(res) {
+  return res?.data ?? res;
+}
+
 export function readMealTimings() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -32,45 +55,38 @@ function cacheTimings(timings) {
   }
 }
 
-/** Apply a partial { [key]: {fields…} } change set onto the full list. */
-function mergeChanges(timings, changes) {
-  return timings.map((meal) =>
-    changes[meal.key] ? { ...meal, ...changes[meal.key] } : meal
-  );
-}
-
-/** Async read for pages/components. In backend mode, fetch + refresh cache. */
 export async function getMealTimings() {
-  if (!USE_MOCK) {
-    const timings = await apiRequest(ENDPOINTS.mealTimings);
-    cacheTimings(timings);
-    return timings;
-  }
-  return mockRequest(() => readMealTimings());
+  const data = unwrap(await apiRequest(ENDPOINTS.meals));
+  const timings = Array.isArray(data) ? data.map(normalizeMeal) : [];
+  cacheTimings(timings);
+  return timings;
 }
 
 /**
- * Persist ONLY the changed meals/fields.
  *
- * @param {Object} changes  { [mealKey]: { start?, end?, enabled? } } — contains
- *                          just the meals that changed, and within each, just
- *                          the fields that changed. Unchanged meals are omitted.
- *
- * Backend mode → PATCH with the partial body (the backend applies the diff).
- * Mock mode    → merge the diff into the stored full list locally.
- * Either way the local cache is kept in sync so the live screen reflects it.
+ * @param {Object} changes
  */
-export function updateMealTimings(changes) {
-  if (!USE_MOCK) {
-    return apiRequest(ENDPOINTS.mealTimings, {
-      method: "PATCH",
-      body: { changes },
-    }).then((result) => {
-      cacheTimings(mergeChanges(readMealTimings(), changes));
-      return result;
-    });
-  }
+export async function updateMealTimings(changes) {
+  const current = readMealTimings();
+  const byKey = new Map(current.map((m) => [m.key, m]));
+  const keys = Object.keys(changes);
 
-  cacheTimings(mergeChanges(readMealTimings(), changes));
-  return mockRequest({ ok: true, changes }, { latency: 400 });
+  await Promise.all(
+    keys.map((key) => {
+      const meal = byKey.get(key);
+      if (!meal || meal.mealId == null) return null;
+      const merged = { ...meal, ...changes[key] };
+      return apiRequest(ENDPOINTS.meal(meal.mealId), {
+        method: "PUT",
+        body: {
+          name: merged.label,
+          startTime: toHHMMSS(merged.start),
+          endTime: toHHMMSS(merged.end),
+          isActive: merged.enabled,
+        },
+      });
+    })
+  );
+  cacheTimings(current.map((m) => (changes[m.key] ? { ...m, ...changes[m.key] } : m)));
+  return { ok: true, changed: keys };
 }
