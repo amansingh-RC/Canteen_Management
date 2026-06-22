@@ -20,6 +20,8 @@ export default defineConfig([
     rules: {
       // Allow `const { omit, ...rest } = obj` to drop a field without flagging `omit`.
       "no-unused-vars": ["error", { ignoreRestSiblings: true }],
+      // Empty catch blocks are intentional (best-effort storage/parse fallbacks).
+      "no-empty": ["error", { allowEmptyCatch: true }],
     },
   },
   {

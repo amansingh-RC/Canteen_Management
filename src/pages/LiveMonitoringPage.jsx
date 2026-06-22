@@ -10,11 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { useLiveMonitoring } from "@/hooks/useLiveMonitoring";
+import { useDashboard } from "@/hooks/useDashboard";
 
 export default function LiveMonitoringPage() {
-  const { data, loading, error, refetch } = useLiveMonitoring({
-    pollInterval: 3000,
+
+  const { data, loading, error, refetch } = useDashboard({
+    pollInterval: 10000,
   });
 
   return (

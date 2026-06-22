@@ -16,6 +16,9 @@ export const ENDPOINTS = {
 
   liveMonitoring: "/live-monitoring",
 
+  // Dashboard: today's session stats (registered / fed / pending + currentMeal)
+  today: "/today",
+
   meals: "/meals",
   meal: (id) => `/meals/${id}`,
 };

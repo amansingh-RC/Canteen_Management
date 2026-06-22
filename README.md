@@ -1,4 +1,4 @@
-# Royal Chains — Canteen Management System (Admin)
+# Royal Chain — Canteen Management System (Admin)
 
 Admin dashboard for a face-verification based canteen coupon system, built with
 **Vite + React 19**, **Tailwind CSS v4**, and **shadcn/ui** components.
