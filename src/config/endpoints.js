@@ -7,17 +7,15 @@ export const ENDPOINTS = {
 
   users: "/users",
   user: (id) => `/users/${id}`,
-
-  recentSearches: "/analytics/recent-searches",
-  userDetail: "/analytics/user",
+  userAnalytics: (id) => `/users/${id}/analytics`,
 
   reports: "/reports",
   reportExport: "/reports/export",
 
   liveMonitoring: "/live-monitoring",
 
-  // Dashboard: today's session stats (registered / fed / pending + currentMeal)
   today: "/today",
+  mealLogs: "/meallogs",
 
   meals: "/meals",
   meal: (id) => `/meals/${id}`,

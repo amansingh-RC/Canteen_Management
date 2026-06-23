@@ -203,6 +203,36 @@
               ]
             }
           }
+        },
+        {
+          "name": "Get User Analytics",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/2094/analytics?year=2026&month=3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "2094",
+                "analytics"
+              ],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2026",
+                  "description": "Optional year filter"
+                },
+                {
+                  "key": "month",
+                  "value": "3",
+                  "description": "Optional month filter"
+                }
+              ]
+            }
+          }
         }
       ]
     },

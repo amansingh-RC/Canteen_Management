@@ -40,7 +40,6 @@ function LiveContent({ data }) {
     sessions.find((s) => s.key === selectedKey) ||
     sessions.find((s) => s.key === activeMealKey) ||
     sessions[0];
-  const liveSession = sessions.find((s) => s.status === "active");
 
   return (
     <div className="space-y-4">
@@ -100,12 +99,12 @@ function LiveContent({ data }) {
       <Card className="overflow-hidden">
         <CardHeader>
           <CardTitle className="font-bold">
-            Live Verification Feed{liveSession ? ` · ${liveSession.meal}` : ""}
+            Verification Feed · {current.meal}
           </CardTitle>
-          
+
           <Badge variant="secondary">Auto-refreshing</Badge>
         </CardHeader>
-        {liveSession && liveSession.feed.length ? (
+        {current.feed.length ? (
           <Table>
             <TableHeader>
               <TableRow>
@@ -116,7 +115,7 @@ function LiveContent({ data }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {liveSession.feed.map((row) => (
+              {current.feed.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell className="text-muted-foreground">{row.time}</TableCell>
                   <TableCell>{row.employeeId} · {row.name}</TableCell>
@@ -130,7 +129,7 @@ function LiveContent({ data }) {
           </Table>
         ) : (
           <div className="p-8 text-center text-sm text-muted-foreground">
-            No live session right now — the feed appears while a meal window is active.
+            No verifications recorded for {current.meal} {current.status === "upcoming" ? "yet" : "in this session"}.
           </div>
         )}
       </Card>
