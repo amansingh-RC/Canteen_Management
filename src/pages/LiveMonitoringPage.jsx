@@ -11,8 +11,11 @@ import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { useDashboard } from "@/hooks/useDashboard";
+import { useScanEvent } from "@/hooks/useScanEvent";
 
 export default function LiveMonitoringPage() {
+  // Log every scan_event payload coming from the backend.
+  useScanEvent();
 
   const { data, loading, error, refetch } = useDashboard({
     pollInterval: 10000,
