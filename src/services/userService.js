@@ -10,7 +10,7 @@ function normalizeUser(raw = {}) {
   return {
     id: raw.userId,
     name: raw.name ?? "",
-    category: raw.department ?? "—",
+    category: raw.departmentName ?? raw.department ?? "—",
     status: active ? "active" : "disabled",
     statusLabel: active ? "Active" : "Disabled",
   };

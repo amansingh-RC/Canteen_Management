@@ -8,9 +8,9 @@ export const ENDPOINTS = {
   users: "/users",
   user: (id) => `/users/${id}`,
   userAnalytics: (id) => `/users/${id}/analytics`,
-
-  reports: "/reports",
-  reportExport: "/reports/export",
+  
+  reportsMonthly: "/reports/monthly",
+  reportsDuplicates: "/reports/duplicates",
 
   liveMonitoring: "/live-monitoring",
 

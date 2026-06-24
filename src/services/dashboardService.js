@@ -5,34 +5,24 @@ import { decorateTimings, findActiveMeal } from "@/lib/mealStatus";
 import { to12h, countdownTo } from "@/lib/liveTransform";
 import { formatClock } from "@/lib/format";
 
-/*
- * Dashboard data is keyed by mealId so each session shows ONLY its own data:
- *
- *   registered = userStats.totalActiveUsers      (device-registered users)
- *   verified   = distinct users who scanned for THAT meal today (/api/meallogs)
- *   pending    = registered − verified           (active session; decreases live)
- *   expired    = registered − verified           (shown once the session closes)
- *
- * /api/today's userStats is today-wide, so per-session counts come from the
- * meal logs grouped by mealId — that's what keeps sessions from mixing.
- */
-
 function unwrap(res) {
   return res?.data ?? res;
 }
 
-function formatScanTime(value) {
-  if (!value) return "";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? String(value) : formatClock(date);
+function formatScanTime(log = {}) {
+  if (log.logTime) return String(log.logTime).slice(0, 8);
+  if (log.createdAt) {
+    const date = new Date(log.createdAt);
+    if (!Number.isNaN(date.getTime())) return formatClock(date);
+  }
+  return "";
 }
 
-/** A single verification log → live-feed row. */
 function toFeedRow(log = {}, index, mealLabel) {
   const ok = log.status ? log.status === "ALLOWED" : true;
   return {
     id: log.logId ?? log.id ?? index,
-    time: formatScanTime(log.createdAt ?? log.logTime),
+    time: formatScanTime(log),
     employeeId: log.userId ?? log.user?.userId ?? "",
     name: log.user?.name ?? log.name ?? "",
     meal: mealLabel,
@@ -41,10 +31,6 @@ function toFeedRow(log = {}, index, mealLabel) {
   };
 }
 
-/**
- * Build the dashboard snapshot from today's stats + the meal logs.
- * Sessions are matched to logs by `mealId`.
- */
 export function buildDashboardSnapshot(today, logs, now = new Date()) {
   const timings = decorateTimings(readMealTimings(), now);
   const activeMeal = findActiveMeal(timings, now);

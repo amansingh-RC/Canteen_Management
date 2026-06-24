@@ -106,7 +106,7 @@ function buildUserAnalytics(analytics, user, userId, year, month) {
     profile: {
       name,
       employeeId: user?.userId ?? userId,
-      category: user?.department ?? "—",
+      category: user?.departmentName ?? user?.department ?? "—",
       initials: initialsOf(name),
       attendance,
     },

@@ -81,7 +81,7 @@ export default function UserManagementPage() {
                     <TableRow key={u.id}>
                       <TableCell className="font-semibold">{u.id}</TableCell>
                       <TableCell>{u.name}</TableCell>
-                      <TableCell><Badge className="">{u.category}</Badge></TableCell>
+                      <TableCell><Badge className="text-[#2b62ef] bg-[#f0f8ff]">{u.category}</Badge></TableCell>
                       <TableCell><StatusBadge status={u.status} label={u.statusLabel} /></TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm" onClick={() => navigate(`/analytics/user?q=${u.id}`)}>
