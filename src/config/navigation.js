@@ -13,7 +13,7 @@ export const navigationGroups = [
     items: [
       { key: "dashboard", label: "Dashboard", path: "/", icon: LayoutDashboard, roles: ALL_ROLES },
       { key: "users", label: "User Management", path: "/users", icon: Users, roles: ALL_ROLES },
-      { key: "reports", label: "Reports", path: "/reports", icon: FileText, roles: [ROLES.ADMIN] },
+      { key: "reports", label: "Reports", path: "/reports", icon: FileText, roles: ALL_ROLES },
     ],
   },
   {

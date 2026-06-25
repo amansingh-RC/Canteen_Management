@@ -47,8 +47,8 @@ export default function ReportsPage() {
 
       <Tabs defaultValue="summary">
         <TabsList>
-          <TabsTrigger value="summary">Date-wise Attendance</TabsTrigger>
-          <TabsTrigger value="custom">Detailed Reports</TabsTrigger>
+          <TabsTrigger value="summary" className="cursor-pointer">Date-wise Attendance</TabsTrigger>
+          <TabsTrigger value="custom" className="cursor-pointer">Detailed Reports</TabsTrigger>
         </TabsList>
 
         <TabsContent value="summary">
