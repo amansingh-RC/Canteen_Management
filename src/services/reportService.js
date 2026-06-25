@@ -54,6 +54,94 @@ const EXPIRED_COLUMNS = [
   { key: "expired", label: "Expired" },
 ];
 
+// Columns for the date-wise attendance report (one row per day).
+const DATEWISE_COLUMNS = [
+  { key: "date", label: "Date" },
+  ...MEALS.map((m) => ({ key: m.key, label: m.label })),
+  { key: "employees", label: "Employees" },
+  { key: "total", label: "Total Meals" },
+];
+
+// One row per date in the range, with the count of (unique) employees who took
+// each meal that day. `employees` is the number of distinct employees who took
+// at least one meal that day; `total` is the total meals served that day.
+export async function getAttendanceByDate(filters = {}) {
+  const { from, to, category = "All" } = filters;
+
+  const [logsRaw, usersRaw, meals] = await Promise.all([
+    apiRequest(ENDPOINTS.reportsMonthly, { query: { from, to } }).then(unwrap),
+    apiRequest(ENDPOINTS.users).then(unwrap),
+    getMealTimings(),
+  ]);
+
+  const users = Array.isArray(usersRaw) ? usersRaw : [];
+  const userById = new Map(users.map((u) => [String(u.userId), u]));
+  const mealById = new Map(meals.map((m) => [String(m.mealId), m]));
+
+  const inCategory = (userId) => {
+    if (category === "All") return true;
+    const u = userById.get(String(userId));
+    return (u?.departmentName ?? u?.department ?? "—") === category;
+  };
+
+  const logs = (Array.isArray(logsRaw) ? logsRaw : []).filter(
+    (l) => (l.status ?? "ALLOWED") === "ALLOWED" && inCategory(l.userId),
+  );
+
+  // date -> { mealKey -> Set(userId), employees -> Set(userId) }
+  const perDate = new Map();
+  for (const log of logs) {
+    const date = log.logDate;
+    if (!date) continue;
+    if (!perDate.has(date)) {
+      perDate.set(date, {
+        breakfast: new Set(),
+        lunch: new Set(),
+        snack: new Set(),
+        dinner: new Set(),
+        employees: new Set(),
+      });
+    }
+    const bucket = perDate.get(date);
+    const k = keyForName(mealById.get(String(log.mealId))?.label);
+    if (bucket[k]) bucket[k].add(String(log.userId));
+    bucket.employees.add(String(log.userId));
+  }
+
+  const rows = [...perDate.entries()]
+    .sort((a, b) => (a[0] < b[0] ? 1 : -1)) // newest first
+    .map(([date, b]) => {
+      const counts = MEALS.reduce((acc, m) => {
+        acc[m.key] = b[m.key]?.size ?? 0;
+        return acc;
+      }, {});
+      const total = MEALS.reduce((sum, m) => sum + counts[m.key], 0);
+      return {
+        date: formatDate(date),
+        rawDate: date,
+        ...counts,
+        employees: b.employees.size,
+        total,
+      };
+    });
+
+  const totals = rows.reduce(
+    (acc, r) => {
+      MEALS.forEach((m) => (acc[m.key] += r[m.key]));
+      acc.total += r.total;
+      return acc;
+    },
+    { breakfast: 0, lunch: 0, snack: 0, dinner: 0, total: 0 },
+  );
+
+  return {
+    scope: describeScope({ from, to, category }),
+    columns: DATEWISE_COLUMNS,
+    rows,
+    totals,
+  };
+}
+
 export async function getReports(filters = {}) {
   const { from, to, meal = "All", category = "All" } = filters;
 

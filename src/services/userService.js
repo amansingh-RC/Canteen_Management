@@ -17,6 +17,21 @@ function normalizeUser(raw = {}) {
 }
 
 /**
+ * Distinct department names present in the user list, sorted alphabetically.
+ * Used to populate filter dropdowns with real values instead of hardcoded ones.
+ * @returns {Promise<string[]>}
+ */
+export async function getDepartments() {
+  const data = unwrap(await apiRequest(ENDPOINTS.users));
+  const set = new Set();
+  (Array.isArray(data) ? data : []).forEach((u) => {
+    const dept = u.departmentName ?? u.department;
+    if (dept) set.add(String(dept));
+  });
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
+/**
  * @returns {{ items, total, page, pageSize, totalPages }}
  */
 export async function getUsers({ page = 1, pageSize = 12, search, category, status } = {}) {
