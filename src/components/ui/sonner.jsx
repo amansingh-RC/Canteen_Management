@@ -6,9 +6,16 @@ export function Toaster(props) {
   return (
     <Sonner
       theme={theme}
-      position="bottom-right"
+      position="top-center"
       richColors
       closeButton
+      toastOptions={{
+        style: {
+          width: "420px",
+          padding: "16px 18px",
+          fontSize: "15px",
+        },
+      }}
       {...props}
     />
   );
